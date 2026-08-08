@@ -1,0 +1,16 @@
+{
+  "config": {
+    "classmap-authoritative": true
+  },
+  "autoload": {
+    "psr-4": {
+      "Combodo\\iTop\\ItopAttributeEncryptedPassword\\": "src"
+    }
+  },
+  "name": "combodo/itop-attribute-encrypted-password",
+  "type": "itop-extension",
+  "description": "Encrypted password iTop attribute",
+  "require": {
+    "composer-runtime-api": "^2.0"
+  }
+}

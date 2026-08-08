@@ -1,0 +1,7 @@
+{
+  "theming": {
+    "css": [
+      "theming/css/portal-ruxl-blue.css"
+    ]
+  }
+}

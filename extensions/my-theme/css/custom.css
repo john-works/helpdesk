@@ -1,0 +1,191 @@
+/* ---------------------------------------------------
+   PPDA Clean Modern Portal Theme (Full CSS File)
+   Safe for iTop 3.0–3.2
+--------------------------------------------------- */
+
+/* --- COLOR PALETTE --- */
+:root {
+    --ppda-primary: #0A4FA3;
+    --ppda-primary-dark: #083A78;
+    --ppda-secondary: #E7EEF6;
+    --ppda-background: #FFFFFF;
+    --ppda-text: #222222;
+    --ppda-border: #C8D2E1;
+}
+
+/* --- GLOBAL RESETS --- */
+body, html, .portal-main {
+    background: var(--ppda-background) !important;
+    color: var(--ppda-text) !important;
+    font-family: "Open Sans", Arial, sans-serif;
+}
+
+/* Remove overly dark shadows */
+* {
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------
+   HEADER / TOP NAV
+--------------------------------------------------- */
+.portal-header,
+.ibo-page-header,
+.navbar.navbar-default {
+    background-color: var(--ppda-primary) !important;
+    color: #fff !important;
+    border-bottom: none !important;
+}
+
+.navbar-nav > li > a {
+    color: #fff !important;
+    transition: background 0.2s;
+}
+
+.navbar-nav > li > a:hover {
+    background: rgba(255,255,255,0.12) !important;
+}
+
+/* ---------------------------------------------------
+   SIDEBAR
+--------------------------------------------------- */
+.portal-left-menu {
+    background: var(--ppda-secondary) !important;
+}
+
+.portal-left-menu li > a {
+    color: var(--ppda-text) !important;
+    padding: 10px 14px !important;
+    border-radius: 4px;
+    transition: 0.15s;
+}
+
+.portal-left-menu li > a:hover {
+    background: #D9E7F5 !important;
+    color: var(--ppda-primary) !important;
+}
+
+.portal-left-menu li.active > a {
+    background: var(--ppda-primary) !important;
+    color: #fff !important;
+}
+
+/* ---------------------------------------------------
+   DASHBOARD TILES
+--------------------------------------------------- */
+.portal-tile {
+    background: var(--ppda-background) !important;
+    border: 1px solid var(--ppda-border) !important;
+    border-radius: 8px !important;
+    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 12px !important;
+}
+
+.portal-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
+}
+
+/* ---------------------------------------------------
+   BUTTONS
+--------------------------------------------------- */
+.btn-primary {
+    background: var(--ppda-primary) !important;
+    border-color: var(--ppda-primary) !important;
+    color: #fff !important;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--ppda-primary-dark) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
+}
+
+.btn-default:hover {
+    background: #ECEFF3 !important;
+}
+
+/* ---------------------------------------------------
+   FORMS & INPUTS
+--------------------------------------------------- */
+.form-control {
+    border-radius: 6px !important;
+    border: 1px solid var(--ppda-border) !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--ppda-primary) !important;
+    box-shadow: 0 0 4px rgba(10,79,163,0.35) !important;
+}
+
+/* ---------------------------------------------------
+   DATATABLES & TABLES
+--------------------------------------------------- */
+table.dataTable tbody tr:hover {
+    background-color: #F2F7FF !important;
+}
+
+table.dataTable thead th {
+    background: var(--ppda-secondary) !important;
+    color: var(--ppda-text) !important;
+    border-bottom: 2px solid var(--ppda-primary) !important;
+}
+
+/* ---------------------------------------------------
+   LINKS
+--------------------------------------------------- */
+a {
+    color: var(--ppda-primary) !important;
+    transition: opacity 0.15s;
+}
+
+a:hover {
+    opacity: 0.85;
+    text-decoration: none !important;
+}
+
+/* ---------------------------------------------------
+   PANELS & CARDS
+--------------------------------------------------- */
+.panel {
+    border-radius: 8px !important;
+    border-color: var(--ppda-border) !important;
+}
+
+/* Fix ticket view boxes */
+.panel-heading {
+    background: var(--ppda-secondary) !important;
+    color: var(--ppda-primary) !important;
+    border-bottom: none !important;
+}
+
+/* ---------------------------------------------------
+   LOGIN PAGE
+--------------------------------------------------- */
+#login-page,
+.login-box,
+.login-panel {
+    background: var(--ppda-background) !important;
+}
+
+#login-page .btn-primary {
+    background: var(--ppda-primary) !important;
+}
+
+/* ---------------------------------------------------
+   MISC QUALITY-OF-LIFE TWEAKS
+--------------------------------------------------- */
+.portal-main h1,
+.portal-main h2,
+.portal-main h3 {
+    color: var(--ppda-primary) !important;
+}
+
+.breadcrumb {
+    background: transparent !important;
+}
+
+/* Remove harsh borders globally */
+hr {
+    border-color: var(--ppda-border) !important;
+}

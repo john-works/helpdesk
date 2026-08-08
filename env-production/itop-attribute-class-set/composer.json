@@ -1,0 +1,16 @@
+{
+  "config": {
+    "classmap-authoritative": true
+  },
+  "autoload": {
+    "psr-4": {
+      "Combodo\\iTop\\ItopAttributeClassSet\\": "src"
+    }
+  },
+  "name": "combodo/itop-attribute-class-set",
+  "type": "itop-extension",
+  "description": "ClassSet attribute definition",
+  "require": {
+    "composer-runtime-api": "^2.0"
+  }
+}

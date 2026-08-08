@@ -1,0 +1,23 @@
+{
+  "config": {
+    "classmap-authoritative": true
+  },
+  "autoload": {
+    "psr-4": {
+      "Combodo\\iTop\\Oauth2Client\\": "src",
+      "Hybridauth\\": "srcHybridauth"
+    }
+  },
+  "name": "combodo/combodo-oauth2-client",
+  "type": "itop-extension",
+  "description": "Oauth2 Client",
+  "minimum-stability" : "RC",
+  "repositories": [{
+    "type": "vcs",
+    "url": "https://github.com/Combodo/hybridauth"
+  }],
+  "require": {
+    "composer-runtime-api": "^2.0",
+    "hybridauth/hybridauth" : "dev-8375-autoprovisioning"
+  }
+}

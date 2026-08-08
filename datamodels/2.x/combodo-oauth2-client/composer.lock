@@ -1,0 +1,89 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "411a3317034ab4451f9d56ed3cd5c002",
+    "packages": [
+        {
+            "name": "hybridauth/hybridauth",
+            "version": "dev-8375-autoprovisioning",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Combodo/hybridauth.git",
+                "reference": "99c2e392ae0cafaeb30983750fdf4abc77c87e1f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Combodo/hybridauth/zipball/99c2e392ae0cafaeb30983750fdf4abc77c87e1f",
+                "reference": "99c2e392ae0cafaeb30983750fdf4abc77c87e1f",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.4 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "ext-curl": "*",
+                "phpunit/phpunit": "^4.8.35 || ^6.5 || ^8.0 || ^12.0"
+            },
+            "suggest": {
+                "firebase/php-jwt": "Needed to support Apple provider",
+                "phpseclib/phpseclib": "Needed to support Apple provider"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Hybridauth\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "HybridauthTest\\Hybridauth\\": "test/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Miled",
+                    "email": "hybridauth@gmail.com"
+                }
+            ],
+            "description": "PHP Social Authentication Library",
+            "homepage": "https://hybridauth.github.io",
+            "keywords": [
+                "api",
+                "apple",
+                "authentication",
+                "authorization",
+                "facebook",
+                "google",
+                "oauth",
+                "openid",
+                "social",
+                "twitter"
+            ],
+            "support": {
+                "issues": "https://github.com/hybridauth/hybridauth/issues",
+                "gitter": "https://gitter.im/hybridauth/hybridauth",
+                "source": "https://github.com/Combodo/hybridauth/tree/8375-autoprovisioning"
+            },
+            "time": "2025-06-06T12:21:20+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "RC",
+    "stability-flags": {
+        "hybridauth/hybridauth": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "composer-runtime-api": "^2.0"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}

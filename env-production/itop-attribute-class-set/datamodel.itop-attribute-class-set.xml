@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<itop_design version="3.0">
+  <meta>
+    <attribute_definitions>
+      <attribute_definition id="AttributeClassSet" _delta="define">
+        <properties>
+          <property id="sql"/>
+          <property id="more_values"/>
+          <property id="class_category"/>
+          <property id="is_null_allowed"/>
+          <property id="on_target_delete"/>
+          <property id="allowed_values"/>
+          <property id="depends_on"/>
+          <property id="category"/>
+          <property id="max_items"/>
+        </properties>
+      </attribute_definition>
+    </attribute_definitions>
+  </meta>
+</itop_design>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../combodo-api-playground/.idea/combodo-api-playground.iml" filepath="$PROJECT_DIR$/../combodo-api-playground/.idea/combodo-api-playground.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../combodo-hybridauth-configuration/.idea/combodo-hybridauth-configuration.iml" filepath="$PROJECT_DIR$/../combodo-hybridauth-configuration/.idea/combodo-hybridauth-configuration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/itop-ui-copypaste.iml" filepath="$PROJECT_DIR$/.idea/itop-ui-copypaste.iml" />
+    </modules>
+  </component>
+</project>

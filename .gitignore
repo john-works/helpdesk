@@ -1,0 +1,11 @@
+# Secrets - NEVER commit the production configuration (contains DB credentials)
+conf/production/config-itop.php
+conf/production/config-itop.php.backup
+conf/production/cron.params
+
+# Runtime data, dumps, backups, logs
+data/
+log/
+
+# Dependencies
+node_modules/

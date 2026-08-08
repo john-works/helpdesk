@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$USER_HOME$/workspaceSAAS/combodo-hybridauth/.idea/combodo-hybridauth.iml" filepath="$USER_HOME$/workspaceSAAS/combodo-hybridauth/.idea/combodo-hybridauth.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/combodo-oauth2-client.iml" filepath="$PROJECT_DIR$/.idea/combodo-oauth2-client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../combodo-webhook-integration/.idea/combodo-webhook-integration.iml" filepath="$PROJECT_DIR$/../../combodo-webhook-integration/.idea/combodo-webhook-integration.iml" />
+    </modules>
+  </component>
+</project>

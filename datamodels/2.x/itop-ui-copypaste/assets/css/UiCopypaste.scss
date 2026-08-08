@@ -1,0 +1,20 @@
+/*
+ * @copyright   Copyright (C) 2010-2024 Combodo SARL
+ * @license     http://opensource.org/licenses/AGPL-3.0
+ */
+
+/*
+ * CSS of the template page
+ */
+
+.copypaste{
+  font-size: var(--ibo-font-size-150);
+  font-weight: var(--ibo-font-weight-700);
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.copypaste-ok{
+	color: var(--ibo-color-success-700);
+	background-color: transparent;
+}

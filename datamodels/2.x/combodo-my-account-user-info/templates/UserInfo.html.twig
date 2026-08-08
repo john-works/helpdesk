@@ -1,0 +1,21 @@
+{# @copyright   Copyright (C) 2010-2024 Combodo SARL #}
+{# @license     http://opensource.org/licenses/AGPL-3.0 #}
+
+{% UIMultiColumn Standard {} %}
+	{% if null != Section.user %}
+	{% UIColumn Standard {} %}
+		{% set title = 'MyAccount:SubTitle:user' | dict_s %}
+		{% set Infos = Section.user %}
+		{% set edit_link = Section.user_link %}
+		{% include 'section.html.twig' %}
+	{% EndUIColumn %}
+	{% endif %}
+	{% if null != Section.contact %}
+		{% UIColumn Standard {} %}
+			{% set title = 'MyAccount:SubTitle:contact' | dict_s %}
+			{% set Infos = Section.contact %}
+			{% set edit_link = Section.contact_link %}
+			{% include 'section.html.twig' %}
+		{% EndUIColumn %}
+	{% endif %}
+{% EndUIMultiColumn %}

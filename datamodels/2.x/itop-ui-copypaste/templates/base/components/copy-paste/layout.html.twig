@@ -1,0 +1,15 @@
+{# @copyright   Copyright (C) 2010-2024 Combodo SAS #}
+{# @license     http://opensource.org/licenses/AGPL-3.0 #}
+<p id="{{ oUIBlock.GetId() }}"
+   class="{{ oUIBlock.GetBlocksInheritanceCSSClassesAsString() }} {{ oUIBlock.GetAdditionalCSSClassesAsString() }}"
+   data-role="ibo-copypaste"
+>
+    <i id="{{ oUIBlock.GetId() ~ "OK" }}" class="fas fa-check copypaste-ok ibo-is-hidden"></i>
+    <i id="{{ oUIBlock.GetId() ~ "ClickToCopy" }}" class="far fa-copy copypaste"
+       {% if oUIBlock.HasTooltip() %}
+       title="{{ oUIBlock.GetTooltip() }}"
+       {% else %}
+       title="{{ "itop-ui-copypaste:UI:Label:CopyPaste"|dict_s }}"
+       {% endif %}
+    ></i>
+</p>

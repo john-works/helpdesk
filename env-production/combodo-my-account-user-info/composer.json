@@ -1,0 +1,16 @@
+{
+  "config": {
+    "classmap-authoritative": true
+  },
+  "autoload": {
+    "psr-4": {
+      "Combodo\\iTop\\MyAccount\\UserInfo\\": "src"
+    }
+  },
+  "name": "combodo/combodo-my-account-user-info",
+  "type": "itop-extension",
+  "description": "User info for MyAccount module",
+  "require": {
+    "composer-runtime-api": "^2.0"
+  }
+}

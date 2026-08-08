@@ -1,0 +1,27 @@
+{# @copyright   Copyright (C) 2010-2024 Combodo SAS #}
+{# @license     http://opensource.org/licenses/AGPL-3.0 #}
+
+async function writeClipboardText(id, copypasteContentId) {
+    let unclickedButtonID ='#' + id + 'ClickToCopy';
+    let clickedButtonID ='#' + id + 'OK';
+    let contentID ='#' + copypasteContentId ;
+
+    try {
+        elem = $(contentID);
+        if ( elem.children().length > 0 ) {
+            text = $(contentID).children().text().trim();
+        } else {
+            text = $(contentID).text().trim();
+        }
+        await navigator.clipboard.writeText(text);
+    } catch (error) {
+        console.error(error.message);
+    }
+
+    $(unclickedButtonID).addClass('ibo-is-hidden');
+    $(clickedButtonID).removeClass('ibo-is-hidden');
+    setTimeout(function(){
+        $(clickedButtonID).addClass('ibo-is-hidden');
+        $(unclickedButtonID).removeClass('ibo-is-hidden');
+    }, 1000);
+}

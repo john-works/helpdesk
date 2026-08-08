@@ -1,0 +1,31 @@
+:root {
+  --ibo-primary-color: #0a4fa3;
+  --ibo-secondary-color: #e6eff9;
+  --ibo-accent-color: #083a78;
+  --ibo-font-color: #222;
+  --ibo-bg-color: #ffffff;
+}
+
+/* Header */
+.portal-header, .ibo-page-header {
+  background-color: var(--ibo-primary-color) !important;
+  color: #fff !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--ibo-primary-color) !important;
+  border-color: var(--ibo-primary-color) !important;
+  color: #fff !important;
+}
+
+/* Tiles */
+.portal-tile {
+  background: var(--ibo-bg-color) !important;
+  border: 1px solid #ccd6e4 !important;
+}
+
+/* Sidebar */
+.portal-left-menu {
+  background: var(--ibo-secondary-color) !important;
+}

@@ -1,0 +1,107 @@
+<?php
+/**
+ * Localized data
+ *
+ * @copyright Copyright (C) 2010-2024 Combodo SAS
+ * @license    https://opensource.org/licenses/AGPL-3.0
+ * 
+ */
+/**
+ *
+ */
+Dict::Add('IT IT', 'Italian', 'Italiano', array(
+	'Class:KnownError' => 'Errori conosciuti',
+	'Class:KnownError+' => 'Errori documentati per problemi noti',
+	'Class:KnownError/Attribute:name' => 'Nome',
+	'Class:KnownError/Attribute:name+' => '',
+	'Class:KnownError/Attribute:org_id' => 'Cliente ',
+	'Class:KnownError/Attribute:org_id+' => '',
+	'Class:KnownError/Attribute:cust_name' => 'Nome del cliente',
+	'Class:KnownError/Attribute:cust_name+' => '',
+	'Class:KnownError/Attribute:problem_id' => 'Problema correlato',
+	'Class:KnownError/Attribute:problem_id+' => '',
+	'Class:KnownError/Attribute:problem_ref' => 'Ref',
+	'Class:KnownError/Attribute:problem_ref+' => '',
+	'Class:KnownError/Attribute:symptom' => 'Sintomo',
+	'Class:KnownError/Attribute:symptom+' => '',
+	'Class:KnownError/Attribute:root_cause' => 'Causa principale',
+	'Class:KnownError/Attribute:root_cause+' => '',
+	'Class:KnownError/Attribute:workaround' => 'Soluzione temporanea',
+	'Class:KnownError/Attribute:workaround+' => '',
+	'Class:KnownError/Attribute:solution' => 'Solutione',
+	'Class:KnownError/Attribute:solution+' => '',
+	'Class:KnownError/Attribute:error_code' => 'Codice di errore',
+	'Class:KnownError/Attribute:error_code+' => '',
+	'Class:KnownError/Attribute:domain' => 'Dominio',
+	'Class:KnownError/Attribute:domain+' => '',
+	'Class:KnownError/Attribute:domain/Value:Application' => 'Applicazione',
+	'Class:KnownError/Attribute:domain/Value:Application+' => 'Applicazione',
+	'Class:KnownError/Attribute:domain/Value:Desktop' => 'Desktop',
+	'Class:KnownError/Attribute:domain/Value:Desktop+' => 'Desktop',
+	'Class:KnownError/Attribute:domain/Value:Network' => 'Network',
+	'Class:KnownError/Attribute:domain/Value:Network+' => 'Network',
+	'Class:KnownError/Attribute:domain/Value:Server' => 'Server',
+	'Class:KnownError/Attribute:domain/Value:Server+' => 'Server',
+	'Class:KnownError/Attribute:vendor' => 'Venditore',
+	'Class:KnownError/Attribute:vendor+' => '',
+	'Class:KnownError/Attribute:model' => 'Modello',
+	'Class:KnownError/Attribute:model+' => '',
+	'Class:KnownError/Attribute:version' => 'Versione',
+	'Class:KnownError/Attribute:version+' => '',
+	'Class:KnownError/Attribute:ci_list' => 'CIs',
+	'Class:KnownError/Attribute:ci_list+' => 'All the configuration items that are related to this known error~~',
+	'Class:KnownError/Attribute:document_list' => 'Documenti',
+	'Class:KnownError/Attribute:document_list+' => 'All the documents linked to this known error~~',
+));
+
+//
+// Class: lnkErrorToFunctionalCI
+//
+
+Dict::Add('IT IT', 'Italian', 'Italiano', array(
+	'Class:lnkErrorToFunctionalCI' => 'Link Errore /CIFunzionale',
+	'Class:lnkErrorToFunctionalCI+' => 'Infra impattata dal errore conosciuto',
+	'Class:lnkErrorToFunctionalCI/Name' => '%1$s / %2$s~~',
+	'Class:lnkErrorToFunctionalCI/Attribute:functionalci_id' => 'CI',
+	'Class:lnkErrorToFunctionalCI/Attribute:functionalci_id+' => '~~',
+	'Class:lnkErrorToFunctionalCI/Attribute:functionalci_name' => 'CI Nome',
+	'Class:lnkErrorToFunctionalCI/Attribute:functionalci_name+' => '~~',
+	'Class:lnkErrorToFunctionalCI/Attribute:error_id' => 'Errore',
+	'Class:lnkErrorToFunctionalCI/Attribute:error_id+' => '~~',
+	'Class:lnkErrorToFunctionalCI/Attribute:error_name' => 'Nome Errore',
+	'Class:lnkErrorToFunctionalCI/Attribute:error_name+' => '~~',
+	'Class:lnkErrorToFunctionalCI/Attribute:reason' => 'Ragione',
+	'Class:lnkErrorToFunctionalCI/Attribute:reason+' => '~~',
+));
+
+//
+// Class: lnkDocumentToError
+//
+
+Dict::Add('IT IT', 'Italian', 'Italiano', array(
+	'Class:lnkDocumentToError' => 'Link Documento / Errore',
+	'Class:lnkDocumentToError+' => 'Link tra il documento e l\'errore conosciuto',
+	'Class:lnkDocumentToError/Name' => '%1$s / %2$s~~',
+	'Class:lnkDocumentToError/Attribute:document_id' => 'Documenti',
+	'Class:lnkDocumentToError/Attribute:document_id+' => '~~',
+	'Class:lnkDocumentToError/Attribute:document_name' => 'Nome dei documenti',
+	'Class:lnkDocumentToError/Attribute:document_name+' => '~~',
+	'Class:lnkDocumentToError/Attribute:error_id' => 'Errore',
+	'Class:lnkDocumentToError/Attribute:error_id+' => '~~',
+	'Class:lnkDocumentToError/Attribute:error_name' => 'Nome Errore',
+	'Class:lnkDocumentToError/Attribute:error_name+' => '~~',
+	'Class:lnkDocumentToError/Attribute:link_type' => 'link_type',
+	'Class:lnkDocumentToError/Attribute:link_type+' => '~~',
+));
+
+Dict::Add('IT IT', 'Italian', 'Italiano', array(
+	'Menu:ProblemManagement' => 'Gestione dei Problemi',
+	'Menu:ProblemManagement+' => 'Gestione dei Problemi',
+	'Menu:Problem:Shortcuts' => 'Scorciatoia',
+	'Menu:NewError' => 'Nuovo errore conosciuto',
+	'Menu:NewError+' => 'Creazione di un Nuovo Errore Conosciuto',
+	'Menu:SearchError' => 'Ricerca per Errori Conosciuti',
+	'Menu:SearchError+' => 'Ricerca per Errori Conosciuti',
+	'Menu:Problem:KnownErrors' => 'Tutti gli errori conosciuti',
+	'Menu:Problem:KnownErrors+' => 'Tutti gli errori conosciuti',
+));

@@ -1,0 +1,16 @@
+{
+  "config": {
+    "classmap-authoritative": true
+  },
+  "autoload": {
+    "psr-4": {
+      "Combodo\\iTop\\": "src/"
+    }
+  },
+  "name": "combodo/itop-ui-copypaste",
+  "type": "itop-extension",
+  "description": "CopyPaste UI Component",
+  "require": {
+    "composer-runtime-api": "^2.0"
+  }
+}
