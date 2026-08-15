@@ -391,6 +391,24 @@
 				</div>
 			</div>
 		{% endblock %}
+		{% block pModalForConfirm %}
+			<div class="modal fade" id="modal-for-confirm" role="dialog" tabindex="-1">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-label="{{ 'Portal:Button:Close'|dict_s }}"><span aria-hidden="true">&times;</span></button>
+							<h4 class="modal-title">{{ 'Portal:Form:Close:Title'|dict_s }}</h4>
+						</div>
+						<div class="modal-body">
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-default" data-dismiss="modal">{{ 'Portal:Button:Cancel'|dict_s }}</button>
+							<button type="button" class="btn btn-primary">{{ 'Portal:Form:Close:Confirm'|dict_s }}</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		{% endblock %}
 
 		{% block pPageOverlay %}
 			<div id="page_overlay" class="global_overlay">
@@ -477,6 +495,59 @@
                     oModalElem.find('.modal-content .modal-body .alert').addClass('alert-danger').text(sBody);
                     oModalElem.modal('show');
 				};
+				// Display a Bootstrap confirmation dialog, used instead of the browser's native one (eg. when leaving a form with unsaved changes)
+				var ShowConfirmDialog = function(sMessage, fCallback)
+				{
+					var oModalElem = $('#modal-for-confirm');
+					oModalElem.find('.modal-content .modal-body').text(sMessage);
+					oModalElem.find('.modal-content .modal-footer .btn-primary').off('click').on('click', function () {
+						oModalElem.modal('hide');
+						if (fCallback !== undefined)
+						{
+							fCallback();
+						}
+					});
+					oModalElem.modal('show');
+				};
+				// Overload the leave handler so the "Do you want to leave this form?" prompt is displayed in a Bootstrap modal instead of the browser's native dialog
+				if (($.itop !== undefined) && ($.itop.leave_handler !== undefined))
+				{
+					$.itop.leave_handler.prototype._onLeaveHandler = function(oEvent)
+					{
+						var me = this;
+						for (var aRegisteredBlocker in me.registered_blockers)
+						{
+							for (var sBlockerTarget in me.registered_blockers[aRegisteredBlocker])
+							{
+								var oBlocker = me.registered_blockers[aRegisteredBlocker][sBlockerTarget];
+								if ($(oBlocker['selector'])[0] === oEvent.target && oBlocker['eventName'].split('.')[0] === oEvent.type)
+								{
+									if (oEvent.type === 'beforeunload')
+									{
+										oEvent.returnValue = me.options.message;
+										return;
+									}
+									else
+									{
+										// Prevent the leave from happening while we ask for confirmation
+										oEvent.preventDefault();
+										oEvent.stopPropagation();
+
+										ShowConfirmDialog(me.options.message, function () {
+											$('body').trigger('unregister_blocker.itop', {'sBlockerId': aRegisteredBlocker});
+											// Re-trigger the leave attempt (eg. closing the modal) now that the blocker has been removed
+											if ($(oEvent.target).hasClass('modal'))
+											{
+												$(oEvent.target).modal('hide');
+											}
+										});
+										return false;
+									}
+								}
+							}
+						}
+					};
+				}
 			{% endblock %}
 
             $(document).ready(function ()
@@ -547,6 +618,46 @@
                     'extra_events': {
                         'body': ['hide.bs.modal']
                     }
+                });
+                // When a form has unsaved changes, clicking a link navigates away from the page and triggers the
+                // browser's native 'beforeunload' dialog. Convert that into the Bootstrap confirmation dialog instead.
+                $(document).on('click', 'a[href]', function (oEvent) {
+                    var oLeaveHandler = $('body').data('itop-leave-handler');
+                    if (oLeaveHandler === undefined || oLeaveHandler.registered_blockers === undefined)
+                    {
+                        return;
+                    }
+                    // If no blocker is active, there is nothing to confirm
+                    var bHasBlockers = false;
+                    for (var sBlockerId in oLeaveHandler.registered_blockers)
+                    {
+                        if (Object.keys(oLeaveHandler.registered_blockers[sBlockerId]).length > 0)
+                        {
+                            bHasBlockers = true;
+                            break;
+                        }
+                    }
+                    if (!bHasBlockers)
+                    {
+                        return;
+                    }
+                    var $oLink = $(this);
+                    var sHref = $oLink.attr('href');
+                    // Skip links that don't navigate away from the page
+                    if (!sHref || sHref === '#' || sHref.charAt(0) === '#' || sHref.indexOf('javascript:') === 0 || $oLink.attr('target') === '_blank' || $oLink.attr('data-toggle') !== undefined || $oLink.attr('download') !== undefined)
+                    {
+                        return;
+                    }
+                    oEvent.preventDefault();
+                    oEvent.stopImmediatePropagation();
+                    ShowConfirmDialog(oLeaveHandler.options.message, function () {
+                        // Unregister all blockers so navigation isn't blocked again
+                        for (var sBlockerToRemove in oLeaveHandler.registered_blockers)
+                        {
+                            $('body').trigger('unregister_blocker.itop', {'sBlockerId': sBlockerToRemove});
+                        }
+                        window.location.href = sHref;
+                    });
                 });
                 {% endblock %}
 			});

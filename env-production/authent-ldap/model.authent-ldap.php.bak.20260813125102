@@ -36,7 +36,6 @@ class UserLDAP extends UserInternal
 		MetaModel::Init_Params($aParams);
 		MetaModel::Init_InheritAttributes();
 		MetaModel::Init_AddAttribute(new AttributeString("ldap_server", array("sql"=>'ldap_server', "is_null_allowed"=>true, "default_value"=>'', "allowed_values"=>null, "depends_on"=>array(), "always_load_in_tables"=>false)));
-		MetaModel::Init_AddAttribute(new AttributeOneWayPassword("local_password", array("allowed_values"=>null, "is_null_allowed"=>true, "default_value"=>'', "depends_on"=>array(), "always_load_in_tables"=>false)));
 
 
 
@@ -59,11 +58,10 @@ class UserLDAP extends UserInternal
     array (
       0 => 'profile_list',
     ),
-  'fieldset:UserLDAP:server' => 
-  array (
-    0 => 'ldap_server',
-    1 => 'local_password',
-  ),
+    'fieldset:UserLDAP:server' => 
+    array (
+      0 => 'ldap_server',
+    ),
   ),
   0 => 'allowed_org_list',
   1 => 'log',
@@ -102,27 +100,6 @@ class UserLDAP extends UserInternal
 	 * @throws \CoreException
 	 */
 	public function CheckCredentials($sPassword)
-	{
-		// 1) Try the LDAP server first (standard behaviour)
-		if ($this->CheckCredentialsAgainstLDAP($sPassword))
-		{
-			return true;
-		}
-
-		// 2) Fallback: allow an administrator to assign a local password for this
-		//    user directly in the iTop console (attribute 'local_password'). Useful
-		//    when the AD/LDAP account is missing or unreliable.
-		$oLocalPassword = $this->Get('local_password');
-		if (($oLocalPassword instanceof ormPassword) && !$oLocalPassword->IsEmpty() && $oLocalPassword->CheckPassword($sPassword))
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-
-	protected function CheckCredentialsAgainstLDAP($sPassword)
 	{
 		$sServer = $this->Get('ldap_server');
 		if (empty($sServer))

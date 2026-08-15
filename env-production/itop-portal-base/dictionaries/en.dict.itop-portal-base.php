@@ -67,6 +67,8 @@ Dict::Add('EN US', 'English', 'English', array(
 // Object form
 Dict::Add('EN US', 'English', 'English', array(
 	'Portal:Form:Caselog:Entry:Close:Tooltip' => 'Close this entry',
+	'Portal:Form:Close:Title' => 'Leaving the form',
+	'Portal:Form:Close:Confirm' => 'Leave',
 	'Portal:Form:Close:Warning' => 'Do you want to leave this form? Data entered may be lost',
 	'Portal:Error:ObjectCannotBeCreated' => 'Error: object cannot be created. Check associated objects and attachments before submitting this form again.',
 	'Portal:Error:ObjectCannotBeUpdated' => 'Error: object cannot be updated. Check associated objects and attachments before submitting this form again.',

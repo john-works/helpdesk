@@ -6,7 +6,6 @@ define("EMAIL_IMAP_SSL", true);
 define("IMAP_MAILBOX", "INBOX");
 define("PROCESSED_FOLDER", "Processed");
 define("LOG_FILE", "/tmp/email-to-ticket.log");
-define("ALLOWED_DOMAIN", "@ppda.go.ug");
 define("CRON_INTERVAL", 30);
 define("EMAIL_SMTP_HOST", "mail.ppda.go.ug");
 define("EMAIL_SMTP_PORT", 465);
@@ -20,23 +19,25 @@ define("EMAIL_SMTP_SSL", true);
 //                (from = this mailbox, cc = the given address). Leave null to disable.
 $MAILBOXES = [
     [
-        'user'       => 'helpdesk@ppda.go.ug',
-        'pass'       => '23r0@2Q2$',
-        'class'      => 'UserRequest',
-        'service_id' => null,
-        'team_id'    => 179, // Helpdesk
-        'notify'     => [
+        'user'            => 'helpdesk@ppda.go.ug',
+        'pass'            => '23r0@2Q2$',
+        'class'           => 'UserRequest',
+        'service_id'      => null,
+        'team_id'         => 179, // Helpdesk
+        'allowed_domains' => ['@ppda.go.ug'], // Only internal senders
+        'notify'          => [
             'from_label' => 'PPDA IT Helpdesk',
             'cc'         => 'it@ppda.go.ug',
         ],
     ],
     [
-        'user'       => 'registryhelpdesk@ppda.go.ug',
-        'pass'       => 'ppda2026!',
-        'class'      => 'UserRequest',
-        'service_id' => 40,  // Letter Request (Registry Service family)
-        'team_id'    => 293, // Registry Help Desk
-        'notify'     => [
+        'user'            => 'registryhelpdesk@ppda.go.ug',
+        'pass'            => 'ppda2026!',
+        'class'           => 'UserRequest',
+        'service_id'      => 40,  // Letter Request (Registry Service family)
+        'team_id'         => 293, // Registry Help Desk
+        'allowed_domains' => null, // Accept senders from any mail domain
+        'notify'          => [
             'from_label' => 'PPDA IT Helpdesk',
             'cc'         => 'library@ppda.go.ug',
         ],
@@ -131,10 +132,20 @@ function processEmail($imap, $msgId, $cfg)
         return;
     }
 
-    if (!str_ends_with($fromEmail, ALLOWED_DOMAIN)) {
-        log_msg("  SKIPPING: $fromEmail not from " . ALLOWED_DOMAIN);
-        $imap->markAsSeen($msgId);
-        return;
+    $allowedDomains = $cfg['allowed_domains'] ?? null;
+    if (!empty($allowedDomains)) {
+        $isAllowed = false;
+        foreach ($allowedDomains as $suffix) {
+            if (str_ends_with($fromEmail, $suffix)) {
+                $isAllowed = true;
+                break;
+            }
+        }
+        if (!$isAllowed) {
+            log_msg("  SKIPPING: $fromEmail not from an allowed domain (" . implode(", ", $allowedDomains) . ")");
+            $imap->markAsSeen($msgId);
+            return;
+        }
     }
 
     require_once "/var/www/html/itop_new/approot.inc.php";

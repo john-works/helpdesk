@@ -277,7 +277,7 @@
           <mode id="tree"/>
           <mode id="mosaic"/>
         </availables>
-        <default>list</default>
+        <default>mosaic</default>
       </browse_modes>
       <!-- Optional. Set the default number of item lists will display. -->
       <!-- <default_list_length>20</default_list_length> -->
@@ -302,7 +302,7 @@
       <!--<mode id="bar-chart"/>-->
       <!--</availables>-->
       <!-- Optional tag to define which display mode will be used by default when opening the brick -->
-      <!--<default>list</default>-->
+      <!--<default>mosaic</default>-->
       <!-- Optional tag to define which display mode will be used to render the brick's tile -->
       <!--<tile>text</tile>-->
       <!--</display_modes>-->
@@ -429,7 +429,7 @@
       <!--<mode id="bar-chart"/>-->
       <!--</availables>-->
       <!-- Optional tag to define which display mode will be used by default when opening the brick -->
-      <!--<default>list</default>-->
+      <!--<default>mosaic</default>-->
       <!-- Optional tag to define which display mode will be used to render the brick's tile -->
       <!--<tile>text</tile>-->
       <!--</display_modes>-->
