@@ -68,7 +68,7 @@ class IMAPClient
 
     public function fetchBody($msgId)
     {
-        $response = $this->sendCommand("FETCH", "$msgId (BODY[])");
+        $response = $this->sendCommand("FETCH", "$msgId (BODY.PEEK[])");
         return $this->extractBody($response);
     }
 

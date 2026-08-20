@@ -3,9 +3,14 @@
 
 {% extends "base.html.twig" %}
 
+{% block login_logo %}{% endblock %}
+
 {% block login_content %}
 
 	<div id="login-content">
+		<div id="login-logo">
+			<img title="{{ sVersionShort }}" src="{{ sAppRootUrl }}images/ppda.jpg" alt="PPDA Logo">
+		</div>
 	{% block login_title %}
 		<div id="login-title">
 			<h1>{{ 'UI:Login:Welcome'|dict_s }}</h1>

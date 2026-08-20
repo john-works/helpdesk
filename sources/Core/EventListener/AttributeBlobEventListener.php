@@ -33,6 +33,10 @@ class AttributeBlobEventListener implements iEventServiceSetup
 	 */
 	public function RegisterEventsAndListeners()
 	{
+		if (!defined('EVENT_DOWNLOAD_DOCUMENT')) {
+			return;
+		}
+
 		EventService::RegisterListener(
 			\EVENT_DOWNLOAD_DOCUMENT,
 			[$this, 'OnAttributeBlobDownloadActivateTrigger']

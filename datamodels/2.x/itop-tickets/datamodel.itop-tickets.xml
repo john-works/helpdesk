@@ -981,6 +981,17 @@
             <level id="1">
               <class>ServiceFamily</class>
               <image_att>icon</image_att>
+              <actions>
+                <action id="create_from_this" xsi:type="create_from_this">
+                  <class>UserRequest</class>
+                  <icon_class>fc fc-new-request fc-1-6x fc-flip-horizontal</icon_class>
+                  <rules>
+                    <rule id="contact-to-userrequest"/>
+                    <rule id="servicesubcategory-to-userrequest"/>
+                    <rule id="go-to-open-request-on-submit"/>
+                  </rules>
+                </action>
+              </actions>
               <levels>
                 <!-- Level IDs must be numeric -->
                 <level id="1">
@@ -1045,11 +1056,9 @@
           </levels>
           <browse_modes>
             <availables>
-              <mode id="list"/>
-              <mode id="tree"/>
               <mode id="mosaic"/>
             </availables>
-            <default>list</default>
+            <default>mosaic</default>
           </browse_modes>
           <!-- Optional. Set the default number of item lists will display. -->
           <!-- <default_list_length>20</default_list_length> -->

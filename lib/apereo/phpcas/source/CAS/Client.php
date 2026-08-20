@@ -938,7 +938,7 @@ class CAS_Client
         $server_uri,
         $service_base_url,
         $changeSessionID = true,
-        \SessionHandlerInterface $sessionHandler = null
+        ?\SessionHandlerInterface $sessionHandler = null
     ) {
         // Argument validation
         if (gettype($server_version) != 'string')

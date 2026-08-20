@@ -9,7 +9,7 @@ html,body {
 }
 
 h1 {
-	color: #1C94C4;
+	color: #102a43;
 	font-size: 1.83rem;
 }
 
@@ -30,7 +30,7 @@ a:hover {
 }
 
 #login-body {
-	background: #ffffff;
+	background: linear-gradient(135deg, #0a1628 0%, #0f2847 25%, #163d6b 50%, #1a4a80 75%, #0d3162 100%);
 	margin: 0;
 	padding: 0;
 	height: 100%;
@@ -38,12 +38,42 @@ a:hover {
 	font-size: 1rem;
 	font-family: "Raleway";
 	font-weight: 500;
+	overflow: hidden;
+}
+
+#login-body::before {
+	content: "";
+	position: absolute;
+	top: 0; left: 0; right: 0; bottom: 0;
+	background:
+		linear-gradient(30deg, rgba(30,80,160,0.3) 12%, transparent 12.5%, transparent 87%, rgba(30,80,160,0.3) 87.5%, rgba(30,80,160,0.3)),
+		linear-gradient(150deg, rgba(30,80,160,0.3) 12%, transparent 12.5%, transparent 87%, rgba(30,80,160,0.3) 87.5%, rgba(30,80,160,0.3)),
+		linear-gradient(30deg, rgba(30,80,160,0.3) 12%, transparent 12.5%, transparent 87%, rgba(30,80,160,0.3) 87.5%, rgba(30,80,160,0.3)),
+		linear-gradient(150deg, rgba(30,80,160,0.3) 12%, transparent 12.5%, transparent 87%, rgba(30,80,160,0.3) 87.5%, rgba(30,80,160,0.3)),
+		linear-gradient(60deg, rgba(40,100,180,0.2) 25%, transparent 25.5%, transparent 75%, rgba(40,100,180,0.2) 75%, rgba(40,100,180,0.2)),
+		linear-gradient(60deg, rgba(40,100,180,0.2) 25%, transparent 25.5%, transparent 75%, rgba(40,100,180,0.2) 75%, rgba(40,100,180,0.2));
+	background-size: 80px 140px;
+	background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+#login-body::after {
+	content: "";
+	position: absolute;
+	width: 500px;
+	height: 500px;
+	background: radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%);
+	border-radius: 50%;
+	top: -120px;
+	right: -100px;
+	pointer-events: none;
 }
 
 #login-header {
 }
 
-#login-logo, #login-content {
+#login-content {
 	width: 350px;
 	margin-left: auto;
 	margin-right: auto;
@@ -55,19 +85,26 @@ a:hover {
 }
 
 #login-logo {
-	padding-left: 20px;
-	padding-right: 20px;
-	padding-top: 10px;
-	padding-bottom: 10px;
-	height: 94px;
-	margin-top: 110px;
+	padding: 10px 20px;
+	text-align: center;
+	width: auto;
+	margin: 0 auto;
+}
+
+#login-logo img {
+	border: 0;
+	max-height: 80px;
+	width: auto;
 }
 
 #login-content {
 	padding: 20px;
-	background-color: #fff;
-	border: 2px solid #CCD4DB;
-	border-radius: 4px;
+	background-color: rgba(255, 255, 255, 0.92);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	border-radius: 12px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 	margin-top: 224px;
 }
 
@@ -221,6 +258,32 @@ a:hover {
 	color: #F56565;
 	display: inline-block;
 	padding: 5px;
+}
+
+.pwd-wrapper {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.pwd-wrapper .ibo-input {
+	padding-right: 44px;
+}
+
+.pwd-toggle-btn {
+	position: absolute;
+	right: 14px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #718096;
+	display: flex;
+	align-items: center;
+	padding: 0;
+}
+
+.pwd-toggle-btn:hover {
+	color: #4a5568;
 }
 
 #forgot_pwd_sent{

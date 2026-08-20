@@ -5,8 +5,8 @@ define("EMAIL_IMAP_PORT", 993);
 define("EMAIL_IMAP_SSL", true);
 define("IMAP_MAILBOX", "INBOX");
 define("PROCESSED_FOLDER", "Processed");
-define("LOG_FILE", "/tmp/email-to-ticket.log");
-define("CRON_INTERVAL", 30);
+define("LOG_FILE", "C:\\wamp64\\www\\helpdesk\\extensions\\email-to-ticket\\email-to-ticket.log");
+define("CRON_INTERVAL", 60);
 define("EMAIL_SMTP_HOST", "mail.ppda.go.ug");
 define("EMAIL_SMTP_PORT", 465);
 define("EMAIL_SMTP_SSL", true);
@@ -19,27 +19,15 @@ define("EMAIL_SMTP_SSL", true);
 //                (from = this mailbox, cc = the given address). Leave null to disable.
 $MAILBOXES = [
     [
-        'user'            => 'helpdesk@ppda.go.ug',
-        'pass'            => '23r0@2Q2$',
+        'user'            => 'registryhelpdesk@ppda.go.ug',
+        'pass'            => '9627a9Zz4',
         'class'           => 'UserRequest',
         'service_id'      => null,
-        'team_id'         => 179, // Helpdesk
-        'allowed_domains' => ['@ppda.go.ug'], // Only internal senders
+        'team_id'         => null,
+        'allowed_domains' => null,
         'notify'          => [
             'from_label' => 'PPDA IT Helpdesk',
-            'cc'         => 'it@ppda.go.ug',
-        ],
-    ],
-    [
-        'user'            => 'registryhelpdesk@ppda.go.ug',
-        'pass'            => 'ppda2026!',
-        'class'           => 'UserRequest',
-        'service_id'      => 40,  // Letter Request (Registry Service family)
-        'team_id'         => 293, // Registry Help Desk
-        'allowed_domains' => null, // Accept senders from any mail domain
-        'notify'          => [
-            'from_label' => 'PPDA IT Helpdesk',
-            'cc'         => 'library@ppda.go.ug',
+            'cc'         => 'jssekamatte@ppda.go.ug',
         ],
     ],
 ];
@@ -74,13 +62,31 @@ function run_once($cfg)
         }
 
         $count = 0;
+        $processedIds = [];
         foreach ($unseen as $msgId) {
             try {
                 processEmail($imap, $msgId, $cfg);
+                $processedIds[] = $msgId;
                 $count++;
             } catch (\Exception $e) {
                 log_msg("ERROR processing msg $msgId: " . $e->getMessage());
-                try { $imap->markAsSeen($msgId); } catch (\Exception $e2) {}
+            }
+        }
+
+        if (!empty($processedIds)) {
+            foreach ($processedIds as $msgId) {
+                try {
+                    $imap->copyToFolder($msgId, PROCESSED_FOLDER);
+                    $imap->markDeleted($msgId);
+                } catch (\Exception $e) {
+                    log_msg("WARNING: Could not move msg $msgId to Processed: " . $e->getMessage());
+                    try { $imap->markAsSeen($msgId); } catch (\Exception $e2) {}
+                }
+            }
+            try {
+                $imap->expunge();
+            } catch (\Exception $e) {
+                log_msg("WARNING: EXPUNGE failed: " . $e->getMessage());
             }
         }
 
@@ -148,7 +154,7 @@ function processEmail($imap, $msgId, $cfg)
         }
     }
 
-    require_once "/var/www/html/itop_new/approot.inc.php";
+    require_once "C:\\wamp64\\www\\helpdesk\\approot.inc.php";
     require_once APPROOT . "/application/startup.inc.php";
 
     UserRights::Login("admin");
@@ -167,12 +173,10 @@ function processEmail($imap, $msgId, $cfg)
             if ($operationalStatus === "resolved" || $operationalStatus === "closed" || $status === "resolved" || $status === "closed") {
                 log_msg("  Ticket $ticketRef is $status/$operationalStatus, reopening...");
                 handleTicketReply($oTicket, $rawEmail, $fromEmail);
-                moveToProcessed($imap, $msgId);
                 return;
             } else {
                 log_msg("  Ticket $ticketRef is $status (not resolved), adding public log entry only...");
                 handleTicketReply($oTicket, $rawEmail, $fromEmail);
-                moveToProcessed($imap, $msgId);
                 return;
             }
         } else {
@@ -247,6 +251,9 @@ function processEmail($imap, $msgId, $cfg)
                 $imgUrl = utils::GetAbsoluteUrlAppRoot() . INLINEIMAGE_DOWNLOAD_URL . $imgId . "&s=" . $oInlineImage->Get("secret");
                 $htmlBody = str_replace("cid:$cid", $imgUrl, $htmlBody);
 
+                $b64 = base64_encode($imageInfo["data"]);
+                $htmlBody .= "<p><img src=\"data:{$imageInfo['mime']};base64,$b64\" style=\"max-width:600px;\" alt=\"{$imageInfo['filename']}\"/></p>";
+
                 log_msg("  Embedded image: " . $imageInfo["filename"]);
             } catch (\Exception $e) {
                 log_msg("  WARNING: Could not embed image " . $imageInfo["filename"] . ": " . $e->getMessage());
@@ -257,7 +264,45 @@ function processEmail($imap, $msgId, $cfg)
         $oRequest->DBUpdate();
     }
 
-    moveToProcessed($imap, $msgId);
+    if (!empty($emailData["attachments"])) {
+        $attNames = [];
+        foreach ($emailData["attachments"] as $attInfo) {
+            try {
+                $oDoc = new ormDocument(
+                    $attInfo["data"],
+                    $attInfo["mime"],
+                    $attInfo["filename"]
+                );
+                $oAttachment = MetaModel::NewObject("Attachment");
+                $oAttachment->Set("expire", date('Y-m-d H:i:s', time() + 86400 * 365));
+                $oAttachment->Set("temp_id", "");
+                $oAttachment->Set("item_class", $sClass);
+                $oAttachment->Set("item_id", $key);
+                $oAttachment->Set("item_org_id", $orgId);
+                $oAttachment->Set("contents", $oDoc);
+                $oAttachment->DBInsert();
+
+                $attNames[] = $attInfo["filename"];
+                log_msg("  Attached file: " . $attInfo["filename"]);
+
+                if (str_starts_with($attInfo["mime"], "image/")) {
+                    $b64 = base64_encode($attInfo["data"]);
+                    $safeName = htmlspecialchars($attInfo["filename"], ENT_QUOTES, "UTF-8");
+                    $htmlBody .= "<hr/><p><b>Attachment: $safeName</b></p><p><img src=\"data:{$attInfo['mime']};base64,$b64\" style=\"max-width:600px;\" alt=\"$safeName\"/></p>";
+                }
+            } catch (\Exception $e) {
+                log_msg("  WARNING: Could not attach " . $attInfo["filename"] . ": " . $e->getMessage());
+            }
+        }
+
+        if (strlen($htmlBody) > 65000) {
+            $htmlBody = substr($htmlBody, 0, 65000);
+            $htmlBody .= "<p><i>[Content truncated - attachments saved separately]</i></p>";
+        }
+
+        $oRequest->Set("description", $htmlBody);
+        $oRequest->DBUpdate();
+    }
 }
 
 function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
@@ -265,15 +310,27 @@ function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
     $ref = $oRequest->Get("ref");
     $status = $oRequest->Get("status");
     $subject = $oRequest->Get("title");
+    $description = $oRequest->Get("description");
     $firstName = $oPerson->Get("first_name");
     $fullName = $oPerson->GetName();
+
+    // Strip HTML from description for email
+    $cleanDesc = preg_replace("/<style[^>]*>.*?<\/style>/s", "", $description);
+    $cleanDesc = preg_replace("/<script[^>]*>.*?<\/script>/s", "", $cleanDesc);
+    $cleanDesc = strip_tags($cleanDesc);
+    $cleanDesc = html_entity_decode($cleanDesc, ENT_QUOTES, "UTF-8");
+    // Strip confidentiality note and similar email signatures
+    $cleanDesc = preg_replace("/Confidentiality Note:.*$/is", "", $cleanDesc);
+    $cleanDesc = preg_replace("/This email and any files transmitted.*$/is", "", $cleanDesc);
+    $cleanDesc = preg_replace("/If you received this in error.*$/is", "", $cleanDesc);
+    $cleanDesc = preg_replace("/\n{3,}/", "\n\n", trim($cleanDesc));
 
     $fromAddr = $cfg['user'];
     $fromLabel = !empty($cfg['notify']['from_label']) ? $cfg['notify']['from_label'] : $fromAddr;
     $toAddr = !empty($cfg['notify']['to']) ? $cfg['notify']['to'] : $fromEmail;
     $ccAddr = !empty($cfg['notify']['cc']) ? $cfg['notify']['cc'] : "";
 
-    $greeting = "Dear " . (trim($firstName) ?: $fullName) . ",";
+    $greeting = "Dear " . trim($fullName) . ",";
 
     $htmlBody = "<html><body style='font-family:Arial,sans-serif;font-size:14px;color:#222;'>";
     $htmlBody .= "<p>" . htmlspecialchars($greeting, ENT_QUOTES, "UTF-8") . "</p>";
@@ -281,7 +338,10 @@ function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
     $htmlBody .= "<table cellspacing='0' cellpadding='4' border='0' style='border-collapse:collapse;'>";
     $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Ticket:</b></td><td>" . htmlspecialchars($ref, ENT_QUOTES, "UTF-8") . "</td></tr>";
     $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Subject:</b></td><td>" . htmlspecialchars($subject, ENT_QUOTES, "UTF-8") . "</td></tr>";
-    $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Status:</b></td><td>" . htmlspecialchars($status, ENT_QUOTES, "UTF-8") . "</td></tr>";
+    $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Status:</b></td><td>" . htmlspecialchars(ucfirst($status), ENT_QUOTES, "UTF-8") . "</td></tr>";
+    if (!empty($cleanDesc)) {
+        $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Description:</b></td><td>" . nl2br(htmlspecialchars($cleanDesc, ENT_QUOTES, "UTF-8")) . "</td></tr>";
+    }
     $htmlBody .= "</table>";
     $htmlBody .= "<p>Our team will work on it and update you.</p>";
     $htmlBody .= "<p>Regards,<br>" . htmlspecialchars($fromLabel, ENT_QUOTES, "UTF-8") . "</p>";
@@ -307,6 +367,8 @@ function handleTicketReply($oTicket, $rawEmail, $fromEmail)
     $htmlBody = $emailData["html"];
     $ref = $oTicket->Get("ref");
     $ticketId = $oTicket->GetKey();
+    $sClass = get_class($oTicket);
+    $orgId = $oTicket->Get("org_id");
 
     $status = $oTicket->Get("status");
     $operationalStatus = $oTicket->Get("operational_status");
@@ -321,6 +383,15 @@ function handleTicketReply($oTicket, $rawEmail, $fromEmail)
     // Collapse multiple blank lines
     $plainText = preg_replace("/\n{3,}/", "\n\n", $plainText);
     $plainText = trim($plainText);
+
+    if (!empty($emailData["attachments"])) {
+        $attNames = [];
+        foreach ($emailData["attachments"] as $attInfo) {
+            $attNames[] = $attInfo["filename"];
+        }
+        $plainText .= "\n\nAttachments: " . implode(", ", $attNames);
+    }
+
     $logEntry = "Email reply from $fromEmail:\n" . $plainText;
 
     // Check if ticket needs to be reopened (resolved/closed -> pending)
@@ -350,6 +421,29 @@ function handleTicketReply($oTicket, $rawEmail, $fromEmail)
     $oTicket->Set("public_log", $logEntry);
     $oTicket->DBUpdate();
     log_msg("  Updated $ref (id=$ticketId) with email reply, status=" . $oTicket->Get("status"));
+
+    if (!empty($emailData["attachments"])) {
+        foreach ($emailData["attachments"] as $attInfo) {
+            try {
+                $oDoc = new ormDocument(
+                    $attInfo["data"],
+                    $attInfo["mime"],
+                    $attInfo["filename"]
+                );
+                $oAttachment = MetaModel::NewObject("Attachment");
+                $oAttachment->Set("expire", date('Y-m-d H:i:s', time() + 86400 * 365));
+                $oAttachment->Set("temp_id", "");
+                $oAttachment->Set("item_class", $sClass);
+                $oAttachment->Set("item_id", $ticketId);
+                $oAttachment->Set("item_org_id", $orgId);
+                $oAttachment->Set("contents", $oDoc);
+                $oAttachment->DBInsert();
+                log_msg("  Attached file on reply: " . $attInfo["filename"]);
+            } catch (\Exception $e) {
+                log_msg("  WARNING: Could not attach " . $attInfo["filename"] . " on reply: " . $e->getMessage());
+            }
+        }
+    }
 }
 
 function extractTicketRef($subject)
@@ -390,11 +484,73 @@ function moveToProcessed($imap, $msgId)
     }
 }
 
+function extractDocxText($docxData)
+{
+    $text = "";
+    $tmpFile = tempnam(sys_get_temp_dir(), "docx_");
+    try {
+        file_put_contents($tmpFile, $docxData);
+        $zip = new ZipArchive();
+        if ($zip->open($tmpFile) === true) {
+            $xml = $zip->getFromName("word/document.xml");
+            if ($xml !== false) {
+                $doc = simplexml_load_string($xml);
+                if ($doc !== false) {
+                    $doc->registerXPathNamespace("w", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
+                    $nodes = $doc->xpath("//w:t");
+                    foreach ($nodes as $node) {
+                        $text .= (string)$node . " ";
+                    }
+                }
+            }
+            $zip->close();
+        }
+    } catch (\Exception $e) {
+    }
+    @unlink($tmpFile);
+    return trim($text);
+}
+
+function extractPdfText($pdfData)
+{
+    $text = "";
+    $tmpFile = tempnam(sys_get_temp_dir(), "pdf_");
+    try {
+        file_put_contents($tmpFile, $pdfData);
+        $content = file_get_contents($tmpFile);
+        if ($content !== false) {
+            if (preg_match_all('/BT[\s\S]*?ET/', $content, $matches)) {
+                foreach ($matches[0] as $btBlock) {
+                    if (preg_match_all('/\(([^)]*)\)/', $btBlock, $textMatches)) {
+                        foreach ($textMatches[1] as $t) {
+                            $decoded = @iconv("UTF-16BE", "UTF-8//IGNORE", $t);
+                            $text .= ($decoded !== false) ? $decoded : $t;
+                        }
+                    }
+                    if (preg_match_all('/<([0-9A-Fa-f]+)>/', $btBlock, $hexMatches)) {
+                        foreach ($hexMatches[1] as $hex) {
+                            $binary = hex2bin($hex);
+                            if ($binary !== false) {
+                                $decoded = @iconv("UTF-16BE", "UTF-8//IGNORE", $binary);
+                                $text .= ($decoded !== false) ? $decoded : "";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (\Exception $e) {
+    }
+    @unlink($tmpFile);
+    return trim($text);
+}
+
 function parseEmail($rawEmail)
 {
     $result = [
         "html" => "No readable content",
-        "images" => []
+        "images" => [],
+        "attachments" => []
     ];
 
     $parts = explode("\r\n\r\n", $rawEmail, 2);
@@ -480,6 +636,27 @@ function parseEmail($rawEmail)
                 "filename" => $secFilename ?: "image_" . $cid,
                 "cid" => $cid
             ];
+        } elseif (str_starts_with($secMime, "image/")) {
+            $attName = $secFilename ?: ("image_" . count($result["attachments"]) . "." . str_replace("image/", "", $secMime));
+            $result["attachments"][] = [
+                "data" => $secBody,
+                "mime" => $secMime,
+                "filename" => $attName
+            ];
+        } elseif (!empty($secFilename) || $secDisposition === "attachment") {
+            $attName = $secFilename ?: ("attachment_" . count($result["attachments"]));
+            $result["attachments"][] = [
+                "data" => $secBody,
+                "mime" => $secMime,
+                "filename" => $attName
+            ];
+            
+            if (str_ends_with(strtolower($attName), ".docx")) {
+                $docxText = extractDocxText($secBody);
+                if (!empty($docxText)) {
+                    $result["docx_content"] = $docxText;
+                }
+            }
         }
     }
 
@@ -487,8 +664,31 @@ function parseEmail($rawEmail)
         $result["html"] = $parts_by_type["text/html"];
     } elseif (isset($parts_by_type["text/plain"])) {
         $result["html"] = "<pre>" . htmlentities($parts_by_type["text/plain"], ENT_QUOTES, "UTF-8") . "</pre>";
+    } elseif (!empty($result["docx_content"])) {
+        $docxText = htmlspecialchars($result["docx_content"], ENT_QUOTES, "UTF-8");
+        $result["html"] = "<pre>$docxText</pre>";
+    } elseif (!empty($result["attachments"])) {
+        $attNames = array_column($result["attachments"], "filename");
+        $attList = htmlspecialchars(implode(", ", $attNames), ENT_QUOTES, "UTF-8");
+        $result["html"] = "<p><i>Email contained attachment(s): $attList</i></p>";
+    } elseif (!empty($result["images"])) {
+        $imgCount = count($result["images"]);
+        $result["html"] = "<p><i>Email contained $imgCount inline image(s)</i></p>";
     } else {
         $result["html"] = "No readable content";
+    }
+
+    if (strlen($result["html"]) > 65000) {
+        $fallback = "";
+        if (!empty($result["attachments"])) {
+            $attNames = array_column($result["attachments"], "filename");
+            $fallback = "Email contained attachment(s): " . implode(", ", $attNames);
+        } elseif (!empty($result["images"])) {
+            $fallback = "Email contained " . count($result["images"]) . " inline image(s)";
+        } else {
+            $fallback = "No readable content";
+        }
+        $result["html"] = "<p><i>" . htmlspecialchars($fallback, ENT_QUOTES, "UTF-8") . "</i></p>";
     }
 
     $result["html"] = stripMobileSignatures($result["html"]);
@@ -527,6 +727,9 @@ function stripMobileSignatures($html)
         '/<div[^>]*class=["]moz-signature["][^>]*>.*?<\/div>/is',
         '/<br\s*\\/?>\s*--\s*<br\s*\\/?>.*/is',
         '/(Sent\s+from|Get)\s+(my\s+)?(Outlook|iPhone|iPad|iPod|Android|Samsung|Galaxy|Windows\s+Phone|Mobile).*/is',
+        '/Confidentiality Note:.*$/is',
+        '/This email and any files transmitted.*$/is',
+        '/If you received this in error.*$/is',
     ];
     foreach ($patterns as $pattern) {
         $html = preg_replace($pattern, '', $html);

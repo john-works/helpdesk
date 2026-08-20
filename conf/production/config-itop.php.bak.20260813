@@ -73,7 +73,7 @@ $MySettings = array(
 
 	'db_host' => 'localhost',
 
-	'db_name' => 'itop_new',
+	'db_name' => 'helpdesk',
 
 	'db_pwd' => 'itop_password',
 

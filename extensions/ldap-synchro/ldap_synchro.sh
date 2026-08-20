@@ -2,7 +2,7 @@
 # LDAP to iTop Synchro Automation Script
 # Exports users from AD and imports them into iTop via synchro
 
-ITOP_DIR="/var/www/html/itop_new"
+ITOP_DIR="/var/www/html/helpdesk"
 LOG_DIR="$ITOP_DIR/log"
 CSV_FILE="/tmp/ad_users_$(date +%Y%m%d_%H%M%S).csv"
 LOG_FILE="$LOG_DIR/ldap_synchro.log"

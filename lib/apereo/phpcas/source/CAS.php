@@ -347,7 +347,7 @@ class phpCAS
      */
     public static function client($server_version, $server_hostname,
         $server_port, $server_uri, $service_base_url,
-        $changeSessionID = true, \SessionHandlerInterface $sessionHandler = null
+        $changeSessionID = true, ?\SessionHandlerInterface $sessionHandler = null
     ) {
         phpCAS :: traceBegin();
         if (is_object(self::$_PHPCAS_CLIENT)) {
@@ -402,7 +402,7 @@ class phpCAS
      */
     public static function proxy($server_version, $server_hostname,
         $server_port, $server_uri, $service_base_url,
-        $changeSessionID = true, \SessionHandlerInterface $sessionHandler = null
+        $changeSessionID = true, ?\SessionHandlerInterface $sessionHandler = null
     ) {
         phpCAS :: traceBegin();
         if (is_object(self::$_PHPCAS_CLIENT)) {
