@@ -9,3 +9,6 @@ log/
 
 # Dependencies
 node_modules/
+
+extensions/email-to-ticket/*.log
+*.log
