@@ -987,7 +987,6 @@
                   <icon_class>fc fc-new-request fc-1-6x fc-flip-horizontal</icon_class>
                   <rules>
                     <rule id="contact-to-userrequest"/>
-                    <rule id="servicesubcategory-to-userrequest"/>
                     <rule id="go-to-open-request-on-submit"/>
                   </rules>
                 </action>
@@ -1342,34 +1341,10 @@
           </properties>
           <fields/>
           <twig>
-            <div class="row">
-              <div class="col-sm-6">
-                <div class="form_field" data-field-id="service_id" data-field-flags="mandatory">
-								</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="form_field" data-field-id="servicesubcategory_id" data-field-flags="mandatory">
-								</div>
-              </div>
-            </div>
-            <div id="service_details_placeholder">
-						</div>
-            <div class="row">
-              <div class="col-sm-6">
-                <div class="form_field" data-field-id="impact">
-								</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="form_field" data-field-id="urgency">
-								</div>
-              </div>
-            </div>
             <div>
               <div class="form_field" data-field-id="title">
 							</div>
               <div class="form_field" data-field-id="description">
-							</div>
-              <div class="form_field" data-field-id="contacts_list">
 							</div>
             </div>
           </twig>
@@ -1616,7 +1591,7 @@
           <!-- Mandatory, ID of the BrowseBrick to go to -->
           <id>services</id>
           <!-- Optional, must be an ID of the available browse modes of the brick (//brick/browse_modes/availables/mode) -->
-          <!-- <browse_mode>tree</browse_mode> -->
+          <browse_mode>mosaic</browse_mode>
           <!-- Optional, a string to preset as filter in the brick. ":this->XXX" can be used for the current object -->
           <!-- <filter>computer</filter> -->
         </navigation_rule>

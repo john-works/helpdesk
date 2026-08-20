@@ -1,18 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <itop_design xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.2">
   <menus>
-    <menu id="RegistryServiceRequests" xsi:type="OQLMenuNode">
-      <rank>10</rank>
-      <parent>RequestManagement</parent>
-      <oql>SELECT UserRequest AS u JOIN Service AS s ON u.service_id = s.id WHERE s.servicefamily_id = 2</oql>
-      <do_search>1</do_search>
-    </menu>
-    <menu id="ICTServiceRequests" xsi:type="OQLMenuNode">
-      <rank>11</rank>
-      <parent>RequestManagement</parent>
-      <oql>SELECT UserRequest AS u WHERE (ISNULL(u.service_id)) OR (u.service_id NOT IN (SELECT s FROM Service AS s WHERE s.servicefamily_id = 2))</oql>
-      <do_search>1</do_search>
-    </menu>
     <menu id="NewIncident" xsi:type="NewObjectMenuNode" _delta="delete"/>
   </menus>
 </itop_design>

@@ -1,6 +1,6 @@
 <?php
 //
-// File generated on 2026-08-08T13:02:14+0300
+// File generated on 2026-08-20T15:00:22+0300
 // Please do not edit manually
 //
 MetaModel::IncludeModule(MODULESROOT.'/core/main.php');
@@ -73,7 +73,6 @@ MetaModel::IncludeModule(MODULESROOT.'/itop-request-mgmt-itil/model.itop-request
 MetaModel::IncludeModule(MODULESROOT.'/itop-service-mgmt/model.itop-service-mgmt.php');
 MetaModel::IncludeModule(MODULESROOT.'/itop-storage-mgmt/model.itop-storage-mgmt.php');
 MetaModel::IncludeModule(MODULESROOT.'/itop-virtualization-mgmt/model.itop-virtualization-mgmt.php');
-MetaModel::IncludeModule(MODULESROOT.'/registry-service-menu/model.registry-service-menu.php');
 MetaModel::IncludeModule(MODULESROOT.'/team-ticket-visibility/main.team-ticket-visibility.php');
 MetaModel::IncludeModule(MODULESROOT.'/authent-token/vendor/autoload.php');
 MetaModel::IncludeModule(MODULESROOT.'/authent-token/src/Model/PersonalTokenMenu.php');

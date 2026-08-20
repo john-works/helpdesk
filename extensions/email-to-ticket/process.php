@@ -27,7 +27,7 @@ $MAILBOXES = [
         'allowed_domains' => null,
         'notify'          => [
             'from_label' => 'PPDA IT Helpdesk',
-            'cc'         => 'jssekamatte@ppda.go.ug',
+            'cc'         => 'jssekamatte@ppda.go.ug, jmujuni@ppda.go.ug',
         ],
     ],
 ];
