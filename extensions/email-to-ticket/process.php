@@ -6,10 +6,24 @@ define("EMAIL_IMAP_SSL", true);
 define("IMAP_MAILBOX", "INBOX");
 define("PROCESSED_FOLDER", "Processed");
 define("LOG_FILE", "C:\\wamp64\\www\\helpdesk\\extensions\\email-to-ticket\\email-to-ticket.log");
+define("DEDUP_FILE", __DIR__ . DIRECTORY_SEPARATOR . "processed-messageids.txt");
 define("CRON_INTERVAL", 60);
 define("EMAIL_SMTP_HOST", "mail.ppda.go.ug");
 define("EMAIL_SMTP_PORT", 465);
 define("EMAIL_SMTP_SSL", true);
+
+$processLock = fopen(__DIR__ . DIRECTORY_SEPARATOR . 'email-to-ticket.lock', 'c');
+if ($processLock === false || !flock($processLock, LOCK_EX | LOCK_NB)) {
+    if (is_resource($processLock)) {
+        fclose($processLock);
+    }
+    log_msg("Skipped overlapping email-to-ticket process");
+    exit(0);
+}
+register_shutdown_function(function () use ($processLock) {
+    flock($processLock, LOCK_UN);
+    fclose($processLock);
+});
 
 // One entry per mailbox polled by the cron.
 // Each mailbox maps to a Service (family) and to the Team that handles its tasks.
@@ -25,10 +39,7 @@ $MAILBOXES = [
         'service_id'      => null,
         'team_id'         => null,
         'allowed_domains' => null,
-        'notify'          => [
-            'from_label' => 'PPDA IT Helpdesk',
-            'cc'         => 'jssekamatte@ppda.go.ug, jmujuni@ppda.go.ug',
-        ],
+        'notify'          => null,
     ],
 ];
 
@@ -107,6 +118,7 @@ function processEmail($imap, $msgId, $cfg)
     $from = $header["From"] ?? "unknown";
     $to = $header["To"] ?? "";
     $subject = $header["Subject"] ?? "(No subject)";
+    $messageId = trim($header["Message-ID"] ?? "");
 
     // Block emails sent to everyone@ppda.go.ug - do not create tickets for them
     if (stripos($to, "everyone@ppda.go.ug") !== false) {
@@ -134,6 +146,12 @@ function processEmail($imap, $msgId, $cfg)
     // to avoid the cron reprocessing them and creating tickets.
     if (strtolower($fromEmail) === strtolower($cfg['user'])) {
         log_msg("  SKIPPED: self-sent email from {$cfg['user']}");
+        $imap->markAsSeen($msgId);
+        return;
+    }
+
+    if (!empty($messageId) && isMessageIdProcessed($messageId)) {
+        log_msg("  SKIPPED: duplicate email (Message-ID already processed)");
         $imap->markAsSeen($msgId);
         return;
     }
@@ -206,6 +224,10 @@ function processEmail($imap, $msgId, $cfg)
 
     $emailData = parseEmail($rawEmail);
     $htmlBody = $emailData["html"];
+    if (trim(strip_tags($htmlBody)) === "") {
+        $htmlBody = "<p><i>(No content in email body)</i></p>";
+        $emailData["html"] = $htmlBody;
+    }
 
     $sClass = $cfg['class'];
     $oRequest = MetaModel::NewObject($sClass);
@@ -224,85 +246,139 @@ function processEmail($imap, $msgId, $cfg)
     $key = $oRequest->DBInsert();
     $ref = $oRequest->Get("ref");
 
+    rememberMessageId($messageId);
+
     log_msg("  CREATED $ref (id=$key)");
 
     if (!empty($cfg['notify'])) {
         sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail);
     }
 
-    if (!empty($emailData["images"])) {
-        foreach ($emailData["images"] as $cid => $imageInfo) {
-            try {
-                $oDoc = new ormDocument(
-                    $imageInfo["data"],
-                    $imageInfo["mime"],
-                    $imageInfo["filename"]
-                );
-                $oInlineImage = MetaModel::NewObject("InlineImage");
-                $oInlineImage->Set("expire", time() + 86400 * 30);
-                $oInlineImage->Set("temp_id", "email-import");
-                $oInlineImage->Set("item_class", $sClass);
-                $oInlineImage->Set("item_id", $key);
-                $oInlineImage->Set("item_org_id", $orgId);
-                $oInlineImage->Set("contents", $oDoc);
-                $oInlineImage->Set("secret", sprintf('%06x', mt_rand(0, 0xFFFFFF)));
-                $imgId = $oInlineImage->DBInsert();
+    try {
+        if (!empty($emailData["images"])) {
+            foreach ($emailData["images"] as $cid => $imageInfo) {
+                try {
+                    $oDoc = new ormDocument(
+                        $imageInfo["data"],
+                        $imageInfo["mime"],
+                        $imageInfo["filename"]
+                    );
+                    $oInlineImage = MetaModel::NewObject("InlineImage");
+                    $oInlineImage->Set("expire", time() + 86400 * 30);
+                    $oInlineImage->Set("temp_id", "email-import");
+                    $oInlineImage->Set("item_class", $sClass);
+                    $oInlineImage->Set("item_id", $key);
+                    $oInlineImage->Set("item_org_id", $orgId);
+                    $oInlineImage->Set("contents", $oDoc);
+                    $oInlineImage->Set("secret", sprintf('%06x', mt_rand(0, 0xFFFFFF)));
+                    $imgId = $oInlineImage->DBInsert();
 
-                $imgUrl = utils::GetAbsoluteUrlAppRoot() . INLINEIMAGE_DOWNLOAD_URL . $imgId . "&s=" . $oInlineImage->Get("secret");
-                $htmlBody = str_replace("cid:$cid", $imgUrl, $htmlBody);
+                    $imgUrl = utils::GetAbsoluteUrlAppRoot() . INLINEIMAGE_DOWNLOAD_URL . $imgId . "&s=" . $oInlineImage->Get("secret");
+                    $htmlBody = str_replace("cid:$cid", $imgUrl, $htmlBody);
 
-                $b64 = base64_encode($imageInfo["data"]);
-                $htmlBody .= "<p><img src=\"data:{$imageInfo['mime']};base64,$b64\" style=\"max-width:600px;\" alt=\"{$imageInfo['filename']}\"/></p>";
-
-                log_msg("  Embedded image: " . $imageInfo["filename"]);
-            } catch (\Exception $e) {
-                log_msg("  WARNING: Could not embed image " . $imageInfo["filename"] . ": " . $e->getMessage());
-            }
-        }
-
-        $oRequest->Set("description", $htmlBody);
-        $oRequest->DBUpdate();
-    }
-
-    if (!empty($emailData["attachments"])) {
-        $attNames = [];
-        foreach ($emailData["attachments"] as $attInfo) {
-            try {
-                $oDoc = new ormDocument(
-                    $attInfo["data"],
-                    $attInfo["mime"],
-                    $attInfo["filename"]
-                );
-                $oAttachment = MetaModel::NewObject("Attachment");
-                $oAttachment->Set("expire", date('Y-m-d H:i:s', time() + 86400 * 365));
-                $oAttachment->Set("temp_id", "");
-                $oAttachment->Set("item_class", $sClass);
-                $oAttachment->Set("item_id", $key);
-                $oAttachment->Set("item_org_id", $orgId);
-                $oAttachment->Set("contents", $oDoc);
-                $oAttachment->DBInsert();
-
-                $attNames[] = $attInfo["filename"];
-                log_msg("  Attached file: " . $attInfo["filename"]);
-
-                if (str_starts_with($attInfo["mime"], "image/")) {
-                    $b64 = base64_encode($attInfo["data"]);
-                    $safeName = htmlspecialchars($attInfo["filename"], ENT_QUOTES, "UTF-8");
-                    $htmlBody .= "<hr/><p><b>Attachment: $safeName</b></p><p><img src=\"data:{$attInfo['mime']};base64,$b64\" style=\"max-width:600px;\" alt=\"$safeName\"/></p>";
+                    log_msg("  Embedded image: " . $imageInfo["filename"]);
+                } catch (\Exception $e) {
+                    log_msg("  WARNING: Could not embed image " . $imageInfo["filename"] . ": " . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                log_msg("  WARNING: Could not attach " . $attInfo["filename"] . ": " . $e->getMessage());
             }
+
+            if (strlen($htmlBody) > 65000) {
+                $htmlBody = substr($htmlBody, 0, 65000);
+                $htmlBody .= "<p><i>[Content truncated - inline images saved separately]</i></p>";
+            }
+
+            $oRequest->Set("description", $htmlBody);
+            $oRequest->DBUpdate();
         }
 
-        if (strlen($htmlBody) > 65000) {
-            $htmlBody = substr($htmlBody, 0, 65000);
-            $htmlBody .= "<p><i>[Content truncated - attachments saved separately]</i></p>";
-        }
+        if (!empty($emailData["attachments"])) {
+            $attNames = [];
+            foreach ($emailData["attachments"] as $attInfo) {
+                try {
+                    $oDoc = new ormDocument(
+                        $attInfo["data"],
+                        $attInfo["mime"],
+                        $attInfo["filename"]
+                    );
+                    $oAttachment = MetaModel::NewObject("Attachment");
+                    $oAttachment->Set("expire", date('Y-m-d H:i:s', time() + 86400 * 365));
+                    $oAttachment->Set("temp_id", "");
+                    $oAttachment->Set("item_class", $sClass);
+                    $oAttachment->Set("item_id", $key);
+                    $oAttachment->Set("item_org_id", $orgId);
+                    $oAttachment->Set("contents", $oDoc);
+                    $oAttachment->DBInsert();
 
-        $oRequest->Set("description", $htmlBody);
-        $oRequest->DBUpdate();
+                    $attNames[] = $attInfo["filename"];
+                    log_msg("  Attached file: " . $attInfo["filename"]);
+
+                    if (str_starts_with($attInfo["mime"], "image/")) {
+                        $b64 = base64_encode($attInfo["data"]);
+                        $safeName = htmlspecialchars($attInfo["filename"], ENT_QUOTES, "UTF-8");
+                        $htmlBody .= "<hr/><p><b>Attachment: $safeName</b></p><p><img src=\"data:{$attInfo['mime']};base64,$b64\" style=\"max-width:600px;\" alt=\"$safeName\"/></p>";
+                    }
+                } catch (\Exception $e) {
+                    log_msg("  WARNING: Could not attach " . $attInfo["filename"] . ": " . $e->getMessage());
+                }
+            }
+
+            if (strlen($htmlBody) > 65000) {
+                $htmlBody = substr($htmlBody, 0, 65000);
+                $htmlBody .= "<p><i>[Content truncated - attachments saved separately]</i></p>";
+            }
+
+            $oRequest->Set("description", $htmlBody);
+            $oRequest->DBUpdate();
+        }
+    } catch (\Exception $e) {
+        log_msg("  WARNING: Post-creation update failed for $ref (ticket kept as-is): " . $e->getMessage());
     }
+}
+
+function isMessageIdProcessed($messageId)
+{
+    if (!file_exists(DEDUP_FILE)) {
+        return false;
+    }
+    $lines = @file(DEDUP_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!is_array($lines)) {
+        return false;
+    }
+    $cutoff = time() - 86400 * 30;
+    foreach ($lines as $line) {
+        $parts = explode("\t", $line, 2);
+        if (count($parts) < 2 || (int)$parts[0] < $cutoff) {
+            continue;
+        }
+        if ($parts[1] === $messageId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function rememberMessageId($messageId)
+{
+    if (empty($messageId)) {
+        return;
+    }
+    $lines = [];
+    if (file_exists(DEDUP_FILE)) {
+        $lines = @file(DEDUP_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (!is_array($lines)) {
+            $lines = [];
+        }
+    }
+    $cutoff = time() - 86400 * 30;
+    $kept = [];
+    foreach ($lines as $line) {
+        $parts = explode("\t", $line, 2);
+        if (count($parts) >= 2 && (int)$parts[0] >= $cutoff) {
+            $kept[] = $line;
+        }
+    }
+    $kept[] = time() . "\t" . $messageId;
+    @file_put_contents(DEDUP_FILE, implode("\n", $kept) . "\n", LOCK_EX);
 }
 
 function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
@@ -334,7 +410,7 @@ function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
 
     $htmlBody = "<html><body style='font-family:Arial,sans-serif;font-size:14px;color:#222;'>";
     $htmlBody .= "<p>" . htmlspecialchars($greeting, ENT_QUOTES, "UTF-8") . "</p>";
-    $htmlBody .= "<p>We have received your email. A ticket has been created as follows:</p>";
+    $htmlBody .= "<p>Your request has been registered with the following details:</p>";
     $htmlBody .= "<table cellspacing='0' cellpadding='4' border='0' style='border-collapse:collapse;'>";
     $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Ticket:</b></td><td>" . htmlspecialchars($ref, ENT_QUOTES, "UTF-8") . "</td></tr>";
     $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Subject:</b></td><td>" . htmlspecialchars($subject, ENT_QUOTES, "UTF-8") . "</td></tr>";
@@ -347,7 +423,7 @@ function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
     $htmlBody .= "<p>Regards,<br>" . htmlspecialchars($fromLabel, ENT_QUOTES, "UTF-8") . "</p>";
     $htmlBody .= "</body></html>";
 
-    $emailSubject = "Ticket $ref - $status";
+    $emailSubject = "New request $ref has been registered";
 
     try {
         $smtp = new SMTPClient();
@@ -572,98 +648,12 @@ function parseEmail($rawEmail)
         return $result;
     }
 
-    $sections = explode($boundary, $bodyPart);
-    $parts_by_type = [];
+    parseMultipart($bodyPart, $boundary, $result);
 
-    foreach ($sections as $section) {
-        $secParts = explode("\r\n\r\n", $section, 2);
-        if (count($secParts) < 2) {
-            $secParts = explode("\n\n", $section, 2);
-        }
-        $secHeaders = $secParts[0] ?? "";
-        $secBody = $secParts[1] ?? "";
-
-        $secMime = "";
-        if (preg_match("/Content-Type:\s*(\S+)/i", $secHeaders, $m)) {
-            $secMime = strtolower(trim($m[1], "; \t\r\n"));
-        }
-
-        $secEncoding = "";
-        if (preg_match("/Content-Transfer-Encoding:\s*(\S+)/i", $secHeaders, $m)) {
-            $secEncoding = strtolower(trim($m[1]));
-        }
-
-        $secCharset = "UTF-8";
-        if (preg_match("/charset=\"?([^\"\\r\\n;\\s]+)\"?/i", $secHeaders, $m)) {
-            $secCharset = strtoupper($m[1]);
-        }
-
-        $secContentId = "";
-        if (preg_match("/Content-ID:\s*<(.*?)>/i", $secHeaders, $m)) {
-            $secContentId = trim($m[1]);
-        }
-
-        $secDisposition = "";
-        if (preg_match("/Content-Disposition:\s*(\S+)/i", $secHeaders, $m)) {
-            $secDisposition = strtolower(trim($m[1], "; \t\r\n"));
-        }
-
-        $secFilename = "";
-        if (preg_match("/filename=\"?([^\";\\r\\n]+)\"?/i", $secHeaders, $m)) {
-            $secFilename = trim($m[1]);
-        } elseif (preg_match("/name=\"?([^\";\\r\\n]+)\"?/i", $secHeaders, $m)) {
-            $secFilename = trim($m[1]);
-        }
-
-        $secBody = decodeContent($secBody, $secEncoding, $secCharset);
-
-        if (str_starts_with($secMime, "text/plain")) {
-            $parts_by_type["text/plain"] = $secBody;
-        } elseif (str_starts_with($secMime, "text/html")) {
-            $parts_by_type["text/html"] = $secBody;
-        } elseif (str_starts_with($secMime, "image/") && !empty($secContentId)) {
-            $result["images"][$secContentId] = [
-                "data" => $secBody,
-                "mime" => $secMime,
-                "filename" => $secFilename ?: "image_" . $secContentId,
-                "cid" => $secContentId
-            ];
-        } elseif (str_starts_with($secMime, "image/") && $secDisposition === "inline") {
-            $cid = $secContentId ?: "img_" . count($result["images"]);
-            $result["images"][$cid] = [
-                "data" => $secBody,
-                "mime" => $secMime,
-                "filename" => $secFilename ?: "image_" . $cid,
-                "cid" => $cid
-            ];
-        } elseif (str_starts_with($secMime, "image/")) {
-            $attName = $secFilename ?: ("image_" . count($result["attachments"]) . "." . str_replace("image/", "", $secMime));
-            $result["attachments"][] = [
-                "data" => $secBody,
-                "mime" => $secMime,
-                "filename" => $attName
-            ];
-        } elseif (!empty($secFilename) || $secDisposition === "attachment") {
-            $attName = $secFilename ?: ("attachment_" . count($result["attachments"]));
-            $result["attachments"][] = [
-                "data" => $secBody,
-                "mime" => $secMime,
-                "filename" => $attName
-            ];
-            
-            if (str_ends_with(strtolower($attName), ".docx")) {
-                $docxText = extractDocxText($secBody);
-                if (!empty($docxText)) {
-                    $result["docx_content"] = $docxText;
-                }
-            }
-        }
-    }
-
-    if (isset($parts_by_type["text/html"])) {
-        $result["html"] = $parts_by_type["text/html"];
-    } elseif (isset($parts_by_type["text/plain"])) {
-        $result["html"] = "<pre>" . htmlentities($parts_by_type["text/plain"], ENT_QUOTES, "UTF-8") . "</pre>";
+    if (isset($result["text_html"])) {
+        $result["html"] = $result["text_html"];
+    } elseif (isset($result["text_plain"])) {
+        $result["html"] = "<pre>" . htmlentities($result["text_plain"], ENT_QUOTES, "UTF-8") . "</pre>";
     } elseif (!empty($result["docx_content"])) {
         $docxText = htmlspecialchars($result["docx_content"], ENT_QUOTES, "UTF-8");
         $result["html"] = "<pre>$docxText</pre>";
@@ -695,6 +685,115 @@ function parseEmail($rawEmail)
     return $result;
 }
 
+function parseMultipart($bodyPart, $boundary, &$result)
+{
+    $sections = explode($boundary, $bodyPart);
+    foreach ($sections as $section) {
+        if (trim($section) === "--" || trim($section) === "") {
+            continue;
+        }
+        $secParts = explode("\r\n\r\n", $section, 2);
+        if (count($secParts) < 2) {
+            $secParts = explode("\n\n", $section, 2);
+        }
+        $secHeaders = $secParts[0] ?? "";
+        $secBody = $secParts[1] ?? "";
+
+        $secMime = "";
+        if (preg_match("/Content-Type:\s*(\S+)/i", $secHeaders, $m)) {
+            $secMime = strtolower(trim($m[1], "; \t\r\n"));
+        }
+
+        if (str_starts_with($secMime, "multipart/")) {
+            if (preg_match("/boundary=\"?([^\"\\r\\n]+)\"?/i", $secHeaders . "\r\n" . $secBody, $m)) {
+                parseMultipart($secBody, "--" . $m[1], $result);
+            }
+            continue;
+        }
+
+        handleLeafPart($secHeaders, $secBody, $result);
+    }
+}
+
+function handleLeafPart($secHeaders, $secBody, &$result)
+{
+    $secEncoding = "";
+    if (preg_match("/Content-Transfer-Encoding:\s*(\S+)/i", $secHeaders, $m)) {
+        $secEncoding = strtolower(trim($m[1]));
+    }
+
+    $secCharset = "UTF-8";
+    if (preg_match("/charset=\"?([^\"\\r\\n;\\s]+)\"?/i", $secHeaders, $m)) {
+        $secCharset = strtoupper($m[1]);
+    }
+
+    $secContentId = "";
+    if (preg_match("/Content-ID:\s*<(.*?)>/i", $secHeaders, $m)) {
+        $secContentId = trim($m[1]);
+    }
+
+    $secDisposition = "";
+    if (preg_match("/Content-Disposition:\s*(\S+)/i", $secHeaders, $m)) {
+        $secDisposition = strtolower(trim($m[1], "; \t\r\n"));
+    }
+
+    $secFilename = "";
+    if (preg_match("/filename=\"?([^\";\\r\\n]+)\"?/i", $secHeaders, $m)) {
+        $secFilename = trim($m[1]);
+    } elseif (preg_match("/name=\"?([^\";\\r\\n]+)\"?/i", $secHeaders, $m)) {
+        $secFilename = trim($m[1]);
+    }
+
+    $secMime = "";
+    if (preg_match("/Content-Type:\s*(\S+)/i", $secHeaders, $m)) {
+        $secMime = strtolower(trim($m[1], "; \t\r\n"));
+    }
+
+    $secBody = decodeContent($secBody, $secEncoding, $secCharset);
+
+    if (str_starts_with($secMime, "text/plain")) {
+        $result["text_plain"] = $secBody;
+    } elseif (str_starts_with($secMime, "text/html")) {
+        $result["text_html"] = $secBody;
+    } elseif (str_starts_with($secMime, "image/") && !empty($secContentId)) {
+        $result["images"][$secContentId] = [
+            "data" => $secBody,
+            "mime" => $secMime,
+            "filename" => $secFilename ?: "image_" . $secContentId,
+            "cid" => $secContentId
+        ];
+    } elseif (str_starts_with($secMime, "image/") && $secDisposition === "inline") {
+        $cid = $secContentId ?: "img_" . count($result["images"]);
+        $result["images"][$cid] = [
+            "data" => $secBody,
+            "mime" => $secMime,
+            "filename" => $secFilename ?: "image_" . $cid,
+            "cid" => $cid
+        ];
+    } elseif (str_starts_with($secMime, "image/")) {
+        $attName = $secFilename ?: ("image_" . count($result["attachments"]) . "." . str_replace("image/", "", $secMime));
+        $result["attachments"][] = [
+            "data" => $secBody,
+            "mime" => $secMime,
+            "filename" => $attName
+        ];
+    } elseif (!empty($secFilename) || $secDisposition === "attachment") {
+        $attName = $secFilename ?: ("attachment_" . count($result["attachments"]));
+        $result["attachments"][] = [
+            "data" => $secBody,
+            "mime" => $secMime,
+            "filename" => $attName
+        ];
+
+        if (str_ends_with(strtolower($attName), ".docx")) {
+            $docxText = extractDocxText($secBody);
+            if (!empty($docxText)) {
+                $result["docx_content"] = $docxText;
+            }
+        }
+    }
+}
+
 function extractSinglePart($headers, $body)
 {
     $encoding = "";
@@ -717,6 +816,21 @@ function extractSinglePart($headers, $body)
 }
 
 
+function tagTolerantPattern($phrase)
+{
+    $junk = "(?:\\s|<[^>]*>|&nbsp;|&#160;)*";
+    $chars = preg_split("//u", $phrase, -1, PREG_SPLIT_NO_EMPTY);
+    $parts = [];
+    foreach ($chars as $c) {
+        if ($c === " ") {
+            $parts[] = "\\s";
+        } else {
+            $parts[] = preg_quote($c, "/") . $junk;
+        }
+    }
+    return "/" . implode("", $parts) . ".*/is";
+}
+
 function stripMobileSignatures($html)
 {
     $patterns = [
@@ -727,13 +841,14 @@ function stripMobileSignatures($html)
         '/<div[^>]*class=["]moz-signature["][^>]*>.*?<\/div>/is',
         '/<br\s*\\/?>\s*--\s*<br\s*\\/?>.*/is',
         '/(Sent\s+from|Get)\s+(my\s+)?(Outlook|iPhone|iPad|iPod|Android|Samsung|Galaxy|Windows\s+Phone|Mobile).*/is',
-        '/Confidentiality Note:.*$/is',
-        '/This email and any files transmitted.*$/is',
-        '/If you received this in error.*$/is',
+        tagTolerantPattern("Confidentiality Note:"),
+        tagTolerantPattern("This email and any files transmitted"),
+        tagTolerantPattern("If you received this in error"),
     ];
     foreach ($patterns as $pattern) {
         $html = preg_replace($pattern, '', $html);
     }
+    $html = preg_replace("/(?:\s|<br\s*\/?>|&nbsp;|&#160;)+$/i", "", $html);
     return trim($html);
 }
 

@@ -215,6 +215,7 @@
               <icon_class>fc fc-new-request fc-1-6x fc-flip-horizontal</icon_class>
               <rules>
                 <rule id="contact-to-userrequest"/>
+                <rule id="servicefamily-to-userrequest"/>
                 <rule id="go-to-open-request-on-submit"/>
               </rules>
             </action>
@@ -844,6 +845,12 @@
       <source_class>Service</source_class>
       <presets>
         <preset id="1">copy(id, service_id)</preset>
+      </presets>
+    </action_rule>
+    <action_rule id="servicefamily-to-userrequest" _altered_in="itop-tickets">
+      <source_class>ServiceFamily</source_class>
+      <presets>
+        <preset id="1">copy(id, servicefamily_id)</preset>
       </presets>
     </action_rule>
     <action_rule id="servicesubcategory-to-userrequest" _altered_in="itop-tickets">

@@ -44,7 +44,7 @@ class IMAPClient
 
     public function search($criteria = "UNSEEN")
     {
-        $response = $this->sendCommand("SEARCH", $criteria);
+        $response = $this->sendCommand("UID SEARCH", $criteria);
         if (preg_match("/\* SEARCH (.*)/", $response, $matches)) {
             $ids = trim($matches[1]);
             if (empty($ids)) {
@@ -57,35 +57,35 @@ class IMAPClient
 
     public function fetchRaw($msgId, $parts = "RFC822")
     {
-        return $this->sendCommand("FETCH", "$msgId ($parts)");
+        return $this->sendCommand("UID FETCH", "$msgId ($parts)");
     }
 
     public function fetchHeader($msgId)
     {
-        $response = $this->sendCommand("FETCH", "$msgId (BODY.PEEK[HEADER] FLAGS)");
+        $response = $this->sendCommand("UID FETCH", "$msgId (BODY.PEEK[HEADER] FLAGS)");
         return $this->parseHeader($response);
     }
 
     public function fetchBody($msgId)
     {
-        $response = $this->sendCommand("FETCH", "$msgId (BODY.PEEK[])");
+        $response = $this->sendCommand("UID FETCH", "$msgId (BODY.PEEK[])");
         return $this->extractBody($response);
     }
 
     public function rawCommand($cmd, $args) { return $this->sendCommand($cmd, $args); }
     public function markAsSeen($msgId)
     {
-        $this->sendCommand("STORE", "$msgId +FLAGS (\\SEEN)");
+        $this->sendCommand("UID STORE", "$msgId +FLAGS (\\SEEN)");
     }
 
     public function copyToFolder($msgId, $folder = "Processed")
     {
-        $this->sendCommand("COPY", "$msgId " . $this->escape($folder));
+        $this->sendCommand("UID COPY", "$msgId " . $this->escape($folder));
     }
 
     public function markDeleted($msgId)
     {
-        $this->sendCommand("STORE", "$msgId +FLAGS (\\DELETED)");
+        $this->sendCommand("UID STORE", "$msgId +FLAGS (\\DELETED)");
     }
 
     public function expunge()
