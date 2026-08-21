@@ -600,7 +600,7 @@ Dict::Add('EN GB', 'British English', 'British English', array(
 	'UI:ResetPwd-Ready' => 'The password has been changed.',
 	'UI:ResetPwd-Login' => 'Click here to log in...',
 
-	'UI:Login:About'                               => ITOP_APPLICATION.' Powered by Combodo',
+	'UI:Login:About'                               => 'Powered by PPDA ICT Team',
 	'UI:Login:ChangeYourPassword' => 'Change Your Password',
 	'UI:Login:OldPasswordPrompt' => 'Old password',
 	'UI:Login:NewPasswordPrompt' => 'New password',
@@ -616,7 +616,7 @@ Dict::Add('EN GB', 'British English', 'British English', array(
 	'UI:AccessRO-Users'                            => ITOP_APPLICATION.' is read-only for end-users',
 	'UI:ApplicationEnvironment' => 'Application environment: %1$s',
 	'UI:Login:RetypePwdDoesNotMatch' => 'New password and retyped new password do not match!',
-	'UI:Button:Login'                              => 'Enter '.ITOP_APPLICATION,
+	'UI:Button:Login'                              => 'Login',
 	'UI:Login:Error:AccessRestricted'              => ITOP_APPLICATION_SHORT.' access to this page is restricted. Please, contact an '.ITOP_APPLICATION_SHORT.' administrator.',
 	'UI:Login:Error:AccessAdmin'                   => 'Access restricted to people having administrator privileges. Please, contact an '.ITOP_APPLICATION_SHORT.' administrator.',
 	'UI:Login:Error:WrongOrganizationName' => 'Unknown organisation',

@@ -20,8 +20,8 @@
  */
 
 
-define('ITOP_APPLICATION', 'iTop');
-define('ITOP_APPLICATION_SHORT', 'iTop');
+define('ITOP_APPLICATION', 'PPDA Help Desk');
+define('ITOP_APPLICATION_SHORT', 'PPDA Help Desk');
 
 /**
  * Constant containing the application version

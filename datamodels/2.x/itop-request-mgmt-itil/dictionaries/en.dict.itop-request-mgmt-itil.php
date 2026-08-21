@@ -5,7 +5,7 @@
  */
 
 Dict::Add('EN US', 'English', 'English', array(
-	'Menu:RequestManagement' => 'Helpdesk',
+	'Menu:RequestManagement' => 'PPDA Helpdesk',
 	'Menu:RequestManagement+' => '',
 	'Menu:RequestManagementProvider' => 'Helpdesk provider',
 	'Menu:RequestManagementProvider+' => '',
