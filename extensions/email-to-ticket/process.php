@@ -5,7 +5,7 @@ define("EMAIL_IMAP_PORT", 993);
 define("EMAIL_IMAP_SSL", true);
 define("IMAP_MAILBOX", "INBOX");
 define("PROCESSED_FOLDER", "Processed");
-define("LOG_FILE", "C:\\wamp64\\www\\helpdesk\\extensions\\email-to-ticket\\email-to-ticket.log");
+define("LOG_FILE", "/tmp/email-to-ticket.log");
 define("DEDUP_FILE", __DIR__ . DIRECTORY_SEPARATOR . "processed-messageids.txt");
 define("CRON_INTERVAL", 60);
 define("EMAIL_SMTP_HOST", "mail.ppda.go.ug");
@@ -33,8 +33,8 @@ register_shutdown_function(function () use ($processLock) {
 //                (from = this mailbox, cc = the given address). Leave null to disable.
 $MAILBOXES = [
     [
-        'user'            => 'registryhelpdesk@ppda.go.ug',
-        'pass'            => '9627a9Zz4',
+        'user'            => 'helpdesk@ppda.go.ug',
+        'pass'            => '23r0@2Q2$',
         'class'           => 'UserRequest',
         'service_id'      => null,
         'team_id'         => null,
@@ -172,7 +172,7 @@ function processEmail($imap, $msgId, $cfg)
         }
     }
 
-    require_once "C:\\wamp64\\www\\helpdesk\\approot.inc.php";
+    require_once "/var/www/html/itop_new/approot.inc.php";
     require_once APPROOT . "/application/startup.inc.php";
 
     UserRights::Login("admin");
@@ -387,8 +387,6 @@ function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
     $status = $oRequest->Get("status");
     $subject = $oRequest->Get("title");
     $description = $oRequest->Get("description");
-    $firstName = $oPerson->Get("first_name");
-    $fullName = $oPerson->GetName();
 
     // Strip HTML from description for email
     $cleanDesc = preg_replace("/<style[^>]*>.*?<\/style>/s", "", $description);
@@ -406,22 +404,30 @@ function sendAckEmail($cfg, $oRequest, $oPerson, $fromEmail)
     $toAddr = !empty($cfg['notify']['to']) ? $cfg['notify']['to'] : $fromEmail;
     $ccAddr = !empty($cfg['notify']['cc']) ? $cfg['notify']['cc'] : "";
 
-    $greeting = "Dear " . trim($fullName) . ",";
-
-    $htmlBody = "<html><body style='font-family:Arial,sans-serif;font-size:14px;color:#222;'>";
-    $htmlBody .= "<p>" . htmlspecialchars($greeting, ENT_QUOTES, "UTF-8") . "</p>";
-    $htmlBody .= "<p>Your request has been registered with the following details:</p>";
-    $htmlBody .= "<table cellspacing='0' cellpadding='4' border='0' style='border-collapse:collapse;'>";
-    $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Ticket:</b></td><td>" . htmlspecialchars($ref, ENT_QUOTES, "UTF-8") . "</td></tr>";
-    $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Subject:</b></td><td>" . htmlspecialchars($subject, ENT_QUOTES, "UTF-8") . "</td></tr>";
-    $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Status:</b></td><td>" . htmlspecialchars(ucfirst($status), ENT_QUOTES, "UTF-8") . "</td></tr>";
-    if (!empty($cleanDesc)) {
-        $htmlBody .= "<tr><td style='padding:4px 8px;'><b>Description:</b></td><td>" . nl2br(htmlspecialchars($cleanDesc, ENT_QUOTES, "UTF-8")) . "</td></tr>";
+    try {
+        $fullName = trim((string)$oPerson->Get("name"));
+    } catch (\Exception $e) {
+        $fullName = "";
     }
-    $htmlBody .= "</table>";
-    $htmlBody .= "<p>Our team will work on it and update you.</p>";
-    $htmlBody .= "<p>Regards,<br>" . htmlspecialchars($fromLabel, ENT_QUOTES, "UTF-8") . "</p>";
-    $htmlBody .= "</body></html>";
+    if ($fullName === "") {
+        $fullName = trim($fromEmail);
+    }
+
+    $plain  = "Dear " . $fullName . ",\n\n";
+    $plain .= "Your request has been registered with the following details:\n\n";
+    $plain .= "Ticket Reference: " . $ref . "\n";
+    $plain .= "Title: " . $subject . "\n";
+    $plain .= "Status: " . ucfirst($status) . "\n";
+    if (!empty($cleanDesc)) {
+        $plain .= "Description: " . $cleanDesc . "\n";
+    }
+    $plain .= "\n";
+    $plain .= "We will update you on the progress. You can also check the status at any time.\n\n";
+    $plain .= "Best regards,\n";
+    $plain .= "PPDA IT Help Desk Team";
+
+    // Plain-text format identical to the assigned/resolved notification emails
+    $htmlBody = "<pre>" . htmlspecialchars($plain, ENT_QUOTES, "UTF-8") . "</pre>";
 
     $emailSubject = "New request $ref has been registered";
 

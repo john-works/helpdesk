@@ -1,6 +1,6 @@
 <?php
-define("PHP_PATH", "C:\\wamp64\\bin\\php\\php8.1.33\\php.exe");
-define("SCRIPT", __DIR__ . "\\process.php");
+define("PHP_PATH", "/usr/bin/php");
+define("SCRIPT", __DIR__ . "/process.php");
 define("POLL_INTERVAL", 5);
 
 $daemonLock = fopen(__DIR__ . DIRECTORY_SEPARATOR . 'email-to-ticket-daemon.lock', 'c');

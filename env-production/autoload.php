@@ -1,6 +1,6 @@
 <?php
 //
-// File generated on 2026-08-21T14:30:50+0300
+// File generated on 2026-08-21T19:27:11+0300
 // Please do not edit manually
 //
 MetaModel::IncludeModule(MODULESROOT.'/core/main.php');
@@ -73,6 +73,7 @@ MetaModel::IncludeModule(MODULESROOT.'/itop-request-mgmt-itil/model.itop-request
 MetaModel::IncludeModule(MODULESROOT.'/itop-service-mgmt/model.itop-service-mgmt.php');
 MetaModel::IncludeModule(MODULESROOT.'/itop-storage-mgmt/model.itop-storage-mgmt.php');
 MetaModel::IncludeModule(MODULESROOT.'/itop-virtualization-mgmt/model.itop-virtualization-mgmt.php');
+MetaModel::IncludeModule(MODULESROOT.'/ppda-ticket-notifications/main.ppda-ticket-notifications.php');
 MetaModel::IncludeModule(MODULESROOT.'/team-ticket-visibility/main.team-ticket-visibility.php');
 MetaModel::IncludeModule(MODULESROOT.'/authent-token/vendor/autoload.php');
 MetaModel::IncludeModule(MODULESROOT.'/authent-token/src/Model/PersonalTokenMenu.php');
@@ -311,6 +312,11 @@ return array (
   array (
     'root_dir' => $sCurrEnv.'/itop-virtualization-mgmt',
     'version' => '3.2.1',
+  ),
+  'ppda-ticket-notifications' => 
+  array (
+    'root_dir' => $sCurrEnv.'/ppda-ticket-notifications',
+    'version' => '1.0.0',
   ),
   'registry-service-menu' => 
   array (
