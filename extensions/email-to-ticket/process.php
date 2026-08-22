@@ -202,21 +202,30 @@ function processEmail($imap, $msgId, $cfg)
         }
     }
 
-    $oPerson = MetaModel::GetObjectByColumn("Person", "email", $fromEmail);
+    try {
+        $oPerson = MetaModel::GetObjectByColumn("Person", "email", $fromEmail);
+    } catch (\Exception $e) {
+        $oPerson = null;
+    }
 
     if (!$oPerson) {
         log_msg("  SKIPPING: Unknown sender $fromEmail");
+        rememberMessageId($messageId);
         $imap->markAsSeen($msgId);
         return;
     }
 
-    $orgId = $oPerson->Get("org_id");
-    if (!$orgId) {
-        $oDefaultOrg = MetaModel::GetObjectByColumn("Organization", "name", "PPDA");
+    if (!$orgId = $oPerson->Get("org_id")) {
+        try {
+            $oDefaultOrg = MetaModel::GetObjectByColumn("Organization", "name", "PPDA");
+        } catch (\Exception $e) {
+            $oDefaultOrg = null;
+        }
         if ($oDefaultOrg) {
             $orgId = $oDefaultOrg->GetKey();
         } else {
             log_msg("  ERROR: No organization found");
+            rememberMessageId($messageId);
             $imap->markAsSeen($msgId);
             return;
         }

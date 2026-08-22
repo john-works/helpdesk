@@ -2,7 +2,7 @@
 require_once __DIR__ . '/class.imapclient.php';
 $imap = new IMAPClient();
 $imap->connect('mail.ppda.go.ug', 993, true);
-$imap->login('registryhelpdesk@ppda.go.ug', '9627a9Zz4');
+$imap->login('helpdesk@ppda.go.ug', '23r0@2Q2$');
 $imap->selectMailbox('INBOX');
 $all = $imap->search('ALL');
 $unseen = $imap->search('UNSEEN');
