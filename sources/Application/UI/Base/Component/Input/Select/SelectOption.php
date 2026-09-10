@@ -21,9 +21,9 @@ class SelectOption extends UIBlock
 	/** @var string */
 	protected $sLabel;
 	/** @var bool */
-	protected $bSelected;
+	protected $bSelected = false;
 	/** @var bool */
-	protected $bDisabled;
+	protected $bDisabled = false;
 
 	/**
 	 * @return string
