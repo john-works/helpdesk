@@ -80,7 +80,12 @@ function run_once($cfg)
                 $processedIds[] = $msgId;
                 $count++;
             } catch (\Exception $e) {
-                log_msg("ERROR processing msg $msgId: " . $e->getMessage());
+                log_msg("ERROR processing msg $msgId: " . $e->getMessage() . " - marking as seen to avoid blocking the queue");
+                try {
+                    $imap->markAsSeen($msgId);
+                } catch (\Exception $e2) {
+                    log_msg("WARNING: Could not mark msg $msgId as seen: " . $e2->getMessage());
+                }
             }
         }
 

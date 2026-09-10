@@ -67,17 +67,10 @@ class DBBackupScheduled extends DBBackup
 	{
 		$aFiles = array();
 		$aTimes = array();
-		// Legacy format -limited to 4 Gb
-		foreach(glob($sBackupDir.'*.zip') as $sFilePath)
+		foreach(glob($sBackupDir.'*.sql') as $sFilePath)
 		{
 			$aFiles[] = $sFilePath;
-			$aTimes[] = filemtime($sFilePath); // unix time
-		}
-		// Modern format
-		foreach(glob($sBackupDir.'*.tar.gz') as $sFilePath)
-		{
-			$aFiles[] = $sFilePath;
-			$aTimes[] = filemtime($sFilePath); // unix time
+			$aTimes[] = filemtime($sFilePath);
 		}
 		array_multisort($aTimes, $aFiles);
 	
@@ -101,7 +94,7 @@ class BackupExec extends AbstractWeeklyScheduledProcess
 	}
 
 	/**
-	 * @param string $sBackupDir Target directory, defaults to APPROOT/data/backups/auto
+	 * @param string $sBackupDir Target directory, defaults to /var/backups/helpdesk/
 	 * @param int $iRetentionCount default to the value given in the configuration file 'retentation_count'<br>
 	 *      set to 0 to disable this feature
 	 */
@@ -109,7 +102,7 @@ class BackupExec extends AbstractWeeklyScheduledProcess
 	{
 		if (is_null($sBackupDir))
 		{
-			$this->sBackupDir = APPROOT.'data/backups/auto/';
+			$this->sBackupDir = '/var/backups/helpdesk/';
 		}
 		else
 		{
@@ -159,7 +152,7 @@ class BackupExec extends AbstractWeeklyScheduledProcess
 				}
 			}
 	
-			// Do execute the backup
+			// Do execute the backup as plain .sql
 			//
 			$oBackup->SetMySQLBinDir(MetaModel::GetConfig()->GetModuleSetting($this->GetModuleName(), 'mysql_bindir', ''));
 
@@ -169,14 +162,25 @@ class BackupExec extends AbstractWeeklyScheduledProcess
 			{
 				$sName = $oBackup->MakeName(BACKUP_DEFAULT_FORMAT);
 			}
-			$sBackupFile = $this->sBackupDir.$sName;
-			$sSourceConfigFile = APPCONF.utils::GetCurrentEnvironment().'/'.ITOP_CONFIG_FILE;
+			$sBackupFile = $this->sBackupDir.$sName.'.sql';
 			try
 			{
-				$oBackup->CreateCompressedBackup($sBackupFile, $sSourceConfigFile);
+				$oBackup->DoBackup($sBackupFile);
 			}
 			catch (BackupException $e)
 			{
+				// Send failure notification via email
+				$sSubject = 'Helpdesk System - Backup FAILED - '.date('Y-m-d');
+				$sBody = "Helpdesk system backup FAILED on ".date('Y-m-d H:i:s')."\n".
+					"Database: ".MetaModel::GetConfig()->Get('db_name')."\n".
+					"Error: ".$e->getMessage()."\n";
+				$sFrom = 'helpdesk.ppda.go.ug';
+				$sTo = 'it@ppda.go.ug';
+				$sHeaders = "From: PPDA Help Desk System <$sFrom>\r\n".
+					"X-Mailer: PHP/".phpversion();
+				@mail($sTo, $sSubject, $sBody, $sHeaders);
+				IssueLog::Error('Backup failed notification sent to '.$sTo);
+
 				throw new ProcessFatalException($e->getMessage());
 			}
 		}

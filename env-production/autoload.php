@@ -1,6 +1,6 @@
 <?php
 //
-// File generated on 2026-08-21T19:27:11+0300
+// File generated on 2026-08-31T18:41:37+0300
 // Please do not edit manually
 //
 MetaModel::IncludeModule(MODULESROOT.'/core/main.php');

@@ -178,39 +178,12 @@ abstract class Ticket extends _Ticket
     public function DBInsertNoReload()
     {
           $sClass = get_class($this);
-          $sRootTable = MetaModel::DBGetTable('Ticket');
-          // Compute the next ref from the ACTUAL max ref stored in the database on every insert,
-          // instead of relying on a persistent counter that drifts when a creation attempt fails
-          // or is rolled back. The mutex serializes concurrent creations to avoid duplicate refs.
-          $sMutexKeyName = ItopCounter::class.'-'.$sClass;
-          $oiTopMutex = new iTopMutex($sMutexKeyName);
-          $oiTopMutex->Lock();
-          try
+          $oNewObjectCallback = function () use ($sClass)
           {
-              // When inside a transaction, use a separate connection so the read sees the
-              // latest committed value (same isolation handling as ItopCounter::Inc).
-              $bIsInsideTransaction = CMDBSource::IsInsideTransaction();
-              $sSql = "SELECT COALESCE(MAX(CAST(SUBSTRING(ref, 3) AS UNSIGNED)), 0) FROM `$sRootTable` WHERE finalclass = ".CMDBSource::Quote($sClass)." AND ref LIKE '%-%'";
-              if ($bIsInsideTransaction)
-              {
-                  $hDBLink = ItopCounter::InitMySQLSession();
-                  $iNextId = 0;
-                  if ($hDBLink) {
-                      $r = mysqli_query($hDBLink, $sSql);
-                      if ($r) { $aRow = mysqli_fetch_row($r); $iNextId = (int) $aRow[0]; mysqli_free_result($r); }
-                      mysqli_close($hDBLink);
-                  }
-              }
-              else
-              {
-                  $iNextId = (int) CMDBSource::QueryToScalar($sSql);
-              }
-          }
-          finally
-          {
-              $oiTopMutex->Unlock();
-          }
-          $iNextId++;
+              $sRootTable = MetaModel::DBGetTable('Ticket');
+              return (int) CMDBSource::QueryToScalar("SELECT COALESCE(MAX(CAST(SUBSTRING(ref, 3) AS UNSIGNED)), 0) FROM `$sRootTable` WHERE finalclass = ".CMDBSource::Quote($sClass)." AND ref LIKE '%-%'");
+          };
+          $iNextId = ItopCounter::Inc($sClass, $oNewObjectCallback);
           $sRef = $this->MakeTicketRef($iNextId);
           $this->SetIfNull('ref', $sRef);
           $iKey = parent::DBInsertNoReload();
