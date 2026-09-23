@@ -91,7 +91,7 @@ class UserRequest extends Ticket
 		MetaModel::Init_DefineStimulus(new StimulusInternal("ev_autoresolve", array()));
 		MetaModel::Init_DefineStimulus(new StimulusInternal("ev_autoclose", array()));
 		MetaModel::Init_DefineStimulus(new StimulusUserAction("ev_resolve", array()));
-		MetaModel::Init_DefineStimulus(new StimulusUserAction("ev_close", array()));
+MetaModel::Init_DefineStimulus(new StimulusInternal("ev_close", array()));
 		MetaModel::Init_DefineStimulus(new StimulusUserAction("ev_reopen", array()));
 		MetaModel::Init_DefineStimulus(new StimulusUserAction("ev_wait_for_approval", array()));
 		MetaModel::Init_DefineState(

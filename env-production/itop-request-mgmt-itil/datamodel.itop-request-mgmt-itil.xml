@@ -585,7 +585,7 @@
           <stimulus id="ev_autoresolve" xsi:type="StimulusInternal"/>
           <stimulus id="ev_autoclose" xsi:type="StimulusInternal"/>
           <stimulus id="ev_resolve" xsi:type="StimulusUserAction"/>
-          <stimulus id="ev_close" xsi:type="StimulusUserAction"/>
+          <stimulus id="ev_close" xsi:type="StimulusInternal"/>
           <stimulus id="ev_reopen" xsi:type="StimulusUserAction"/>
           <stimulus id="ev_wait_for_approval" xsi:type="StimulusUserAction"/>
         </stimuli>
