@@ -196,7 +196,12 @@ JS
 		$oQueryArgsContainer = UIContentBlockUIBlockFactory::MakeStandard(null,['wizContainer']);
 		$oQueryForm->AddSubBlock($oQueryArgsContainer);
 		foreach ($aArgs as $sParam => $sValue) {
-			$oInput = InputUIBlockFactory::MakeStandard("text",'arg_'.$sParam,	$sValue);
+			$bIsDateParam = (bool)preg_match('/(^|_)(date|start|end|from|to|begin)(_|$)/i', $sParam);
+			$sType = $bIsDateParam ? 'date' : 'text';
+			if ($bIsDateParam && $sValue === '') {
+				$sValue = date('Y-m-d');
+			}
+			$oInput = InputUIBlockFactory::MakeStandard($sType,'arg_'.$sParam,	$sValue);
 			$oArgInput = \Combodo\iTop\Application\UI\Base\Component\Field\FieldUIBlockFactory::MakeFromObject($sParam,$oInput,Field::ENUM_FIELD_LAYOUT_SMALL);
 			$oArgInput->AddCSSClass("ibo-field--label-small");
 			//$oArgInput = InputUIBlockFactory::MakeForInputWithLabel(				$sParam,				'arg_'.$sParam,				$sValue			);

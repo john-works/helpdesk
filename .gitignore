@@ -11,4 +11,6 @@ log/
 node_modules/
 
 extensions/email-to-ticket/*.log
+extensions/email-to-ticket/*.lock
+extensions/email-to-ticket/processed-messageids.txt
 *.log

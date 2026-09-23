@@ -1,6 +1,6 @@
 <?php
 //
-// File generated on 2026-08-31T18:41:37+0300
+// File generated on 2026-09-11T10:55:27+0300
 // Please do not edit manually
 //
 MetaModel::IncludeModule(MODULESROOT.'/core/main.php');
@@ -36,6 +36,7 @@ MetaModel::IncludeModule(MODULESROOT.'/itop-structure/model.itop-structure.php')
 MetaModel::IncludeModule(MODULESROOT.'/itop-tickets/main.itop-tickets.php');
 MetaModel::IncludeModule(MODULESROOT.'/itop-tickets/model.itop-tickets.php');
 MetaModel::IncludeModule(MODULESROOT.'/itop-welcome-itil/model.itop-welcome-itil.php');
+MetaModel::IncludeModule(MODULESROOT.'/ppda-report/model.ppda-report.php');
 MetaModel::IncludeModule(MODULESROOT.'/combodo-db-tools/src/Service/DBToolsUtils.php');
 MetaModel::IncludeModule(MODULESROOT.'/combodo-db-tools/src/Service/DBAnalyzerUtils.php');
 MetaModel::IncludeModule(MODULESROOT.'/combodo-db-tools/model.combodo-db-tools.php');
