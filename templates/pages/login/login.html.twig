@@ -25,12 +25,15 @@
 		<div id="login-form">
 			<form id="login_form" method="post">
 				<div id="login-form-content">
-					{% block login_sso_buttons %}
-						<div id="login-sso-buttons">
-                            {% import "macros.twig" as Macro %}
-							{{ Macro.BlockExtension(aPluginFormData, 'login_sso_buttons', '<div class="divider"><hr class="left">' ~ 'UI:Login:SeparatorOr'|dict_s ~ '<hr class="right"/></div>') }}
-						</div>
-					{% endblock login_sso_buttons %}
+{% block login_sso_buttons %}
+					<div id="login-sso-buttons">
+						{% import "macros.twig" as Macro %}
+						<a href="{{ sAppRootUrl }}sso.php" class="ppda-sso-btn" style="display:block; padding:0.75em 1em; margin:.25em 0 .5em 0; background:#34495e; color:#ffffff; text-align:center; border-radius:4px; text-decoration:none; font-weight:bold;">
+							Sign in with your PPDA domain account — automatic sign-in
+						</a>
+						{{ Macro.BlockExtension(aPluginFormData, 'login_sso_buttons', '<div class="divider"><hr class="left">' ~ 'UI:Login:SeparatorOr'|dict_s ~ '<hr class="right"/></div>') }}
+					</div>
+				{% endblock login_sso_buttons %}
 					{% block login_input %}
 						<div id="login-input">
                             {% import "macros.twig" as Macro %}
@@ -78,6 +81,24 @@
         {% import "macros.twig" as Macro %}
 		{{ Macro.BlockExtension(aPluginFormData, 'login_footer') }}
 	</div>
+	<script>
+		// PPDA automatic single sign-on (same idea as the timesheet /en/sso flow):
+		// a background fetch to sso.php lets the browser answer the Negotiate
+		// challenge alone on domain computers; sso.php then logs the user in and
+		// redirects, so we navigate into iTop. On any other device the 401 fails
+		// quietly inside this fetch and the normal login form stays visible.
+		(function () {
+			if (window.location.search.indexOf('sso=unavailable') !== -1) { return; }
+			var sUrl = '{{ sAppRootUrl }}sso.php?cb=' + new Date().getTime();
+			fetch(sUrl, { credentials: 'include', redirect: 'follow' })
+				.then(function (oResp) {
+					if (oResp.ok && oResp.url.indexOf('sso=unavailable') === -1) {
+						window.location.href = '{{ sAppRootUrl }}';
+					}
+				})
+				.catch(function () { /* not a domain machine: keep the login form */ });
+		})();
+	</script>
 {% endblock login_footer %}
 
 
