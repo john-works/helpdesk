@@ -54,6 +54,8 @@ return static function (ContainerConfigurator $container) {
             ])
         ->alias(AssetMapperInterface::class, 'asset_mapper')
 
+        ->alias('asset_mapper.http_client', 'http_client')
+
         ->set('asset_mapper.mapped_asset_factory', MappedAssetFactory::class)
             ->args([
                 service('asset_mapper.public_assets_path_resolver'),
@@ -68,6 +70,7 @@ return static function (ContainerConfigurator $container) {
                 param('kernel.debug'),
             ])
             ->decorate('asset_mapper.mapped_asset_factory')
+            ->tag('kernel.reset', ['method' => 'reset', 'on_invalid' => 'ignore'])
 
         ->set('asset_mapper.repository', AssetMapperRepository::class)
             ->args([
@@ -75,6 +78,7 @@ return static function (ContainerConfigurator $container) {
                 param('kernel.project_dir'),
                 abstract_arg('array of excluded path patterns'),
                 abstract_arg('exclude dot files'),
+                param('kernel.debug'),
             ])
 
         ->set('asset_mapper.public_assets_path_resolver', PublicAssetsPathResolver::class)
@@ -97,6 +101,10 @@ return static function (ContainerConfigurator $container) {
             ->args([
                 service('.inner'),
                 service('asset_mapper'),
+                service('request_stack'),
+                abstract_arg('dev server public prefix'),
+                service('assets._default_package_without_version')->nullOnInvalid(),
+                abstract_arg('asset public prefix'),
             ])
 
         ->set('asset_mapper.dev_server_subscriber', AssetMapperDevServerSubscriber::class)
@@ -196,7 +204,7 @@ return static function (ContainerConfigurator $container) {
             ])
 
         ->set('asset_mapper.importmap.resolver', JsDelivrEsmResolver::class)
-            ->args([service('http_client')])
+            ->args([service('asset_mapper.http_client')])
 
         ->set('asset_mapper.importmap.renderer', ImportMapRenderer::class)
             ->args([
@@ -211,12 +219,12 @@ return static function (ContainerConfigurator $container) {
         ->set('asset_mapper.importmap.auditor', ImportMapAuditor::class)
         ->args([
             service('asset_mapper.importmap.config_reader'),
-            service('http_client'),
+            service('asset_mapper.http_client'),
         ])
         ->set('asset_mapper.importmap.update_checker', ImportMapUpdateChecker::class)
         ->args([
             service('asset_mapper.importmap.config_reader'),
-            service('http_client'),
+            service('asset_mapper.http_client'),
         ])
 
         ->set('asset_mapper.importmap.command.require', ImportMapRequireCommand::class)

@@ -42,7 +42,7 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
         $this->namespace = '' === $namespace ? '' : CacheItem::validateKey($namespace).':';
         $this->defaultLifetime = $defaultLifetime;
         if (null !== $this->maxIdLength && \strlen($namespace) > $this->maxIdLength - 24) {
-            throw new InvalidArgumentException(sprintf('Namespace must be %d chars max, %d given ("%s").', $this->maxIdLength - 24, \strlen($namespace), $namespace));
+            throw new InvalidArgumentException(\sprintf('Namespace must be %d chars max, %d given ("%s").', $this->maxIdLength - 24, \strlen($namespace), $namespace));
         }
         self::$createCacheItem ??= \Closure::bind(
             static function ($key, $value, $isHit) {
@@ -192,9 +192,8 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
             if (\is_array($e) || 1 === \count($values)) {
                 foreach (\is_array($e) ? $e : array_keys($values) as $id) {
                     $ok = false;
-                    $v = $values[$id];
-                    $type = get_debug_type($v);
-                    $message = sprintf('Failed to save key "{key}" of type %s%s', $type, $e instanceof \Exception ? ': '.$e->getMessage() : '.');
+                    $type = \array_key_exists($id, $values) ? get_debug_type($values[$id]) : 'unknown';
+                    $message = \sprintf('Failed to save key "{key}" of type %s%s', $type, $e instanceof \Exception ? ': '.$e->getMessage() : '.');
                     CacheItem::log($this->logger, $message, ['key' => substr($id, \strlen($this->namespace)), 'exception' => $e instanceof \Exception ? $e : null, 'cache-adapter' => get_debug_type($this)]);
                 }
             } else {
@@ -218,7 +217,7 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
                 }
                 $ok = false;
                 $type = get_debug_type($v);
-                $message = sprintf('Failed to save key "{key}" of type %s%s', $type, $e instanceof \Exception ? ': '.$e->getMessage() : '.');
+                $message = \sprintf('Failed to save key "{key}" of type %s%s', $type, $e instanceof \Exception ? ': '.$e->getMessage() : '.');
                 CacheItem::log($this->logger, $message, ['key' => substr($id, \strlen($this->namespace)), 'exception' => $e instanceof \Exception ? $e : null, 'cache-adapter' => get_debug_type($this)]);
             }
         }

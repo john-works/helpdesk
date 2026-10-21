@@ -34,12 +34,12 @@ final class TokenStream
         }
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         return implode("\n", $this->tokens);
     }
 
-    public function injectTokens(array $tokens)
+    public function injectTokens(array $tokens): void
     {
         $this->tokens = array_merge(\array_slice($this->tokens, 0, $this->current), $tokens, \array_slice($this->tokens, $this->current));
     }
@@ -76,11 +76,12 @@ final class TokenStream
             $line = $token->getLine();
             throw new SyntaxError(\sprintf('%sUnexpected token "%s"%s ("%s" expected%s).',
                 $message ? $message.'. ' : '',
-                Token::typeToEnglish($token->getType()),
+                $token->toEnglish(),
                 $token->getValue() ? \sprintf(' of value "%s"', $token->getValue()) : '',
                 Token::typeToEnglish($type), $value ? \sprintf(' with value "%s"', $value) : ''),
                 $line,
-                $this->source
+                $this->source,
+                columnno: $this->source->getColumn($token->getOffset() ?? -1),
             );
         }
         $this->next();
@@ -113,7 +114,7 @@ final class TokenStream
      */
     public function isEOF(): bool
     {
-        return Token::EOF_TYPE === $this->tokens[$this->current]->getType();
+        return $this->tokens[$this->current]->test(Token::EOF_TYPE);
     }
 
     public function getCurrent(): Token

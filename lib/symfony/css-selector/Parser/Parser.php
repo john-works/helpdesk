@@ -29,7 +29,7 @@ class Parser implements ParserInterface
 {
     private Tokenizer $tokenizer;
 
-    public function __construct(Tokenizer $tokenizer = null)
+    public function __construct(?Tokenizer $tokenizer = null)
     {
         $this->tokenizer = $tokenizer ?? new Tokenizer();
     }
@@ -57,9 +57,9 @@ class Parser implements ParserInterface
             }
         }
 
-        $joined = trim(implode('', array_map(fn (Token $token) => $token->getValue(), $tokens)));
+        $joined = trim(implode('', array_map(static fn (Token $token) => $token->getValue(), $tokens)));
 
-        $int = function ($string) {
+        $int = static function ($string) {
             if (!is_numeric($string)) {
                 throw SyntaxErrorException::stringAsFunctionArgument();
             }

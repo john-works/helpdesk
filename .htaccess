@@ -1,0 +1,39 @@
+# ==========================================================================
+# Security hardening - added 2026-10-21 (vulnerability & cybersecurity report)
+# Apache 2.4 / AllowOverride All. Keep in sync with the report.
+# ==========================================================================
+
+RewriteEngine On
+
+# --- 1) Force HTTPS (also covers the /itop_new alias that the vhost rewrite
+#        rule in /etc/httpd/conf.d/itop.conf previously exempted) ----------
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# --- 2) Never expose VCS metadata (.git) -----------------------------------
+RewriteRule (^|/)\.git(/|$) - [R=404,L]
+
+# --- 3) CLI-only diagnostics / maintenance / password utilities -----------
+RewriteRule ^(debug_email(_fixed)?|working_email_test|final_system_test|check_modules|check_config_modules|rebuild_cache|set_user_password|set_local_password|sso-fallout)\.php$ - [R=404,L]
+RewriteRule ^php\.out$ - [R=404,L]
+
+# --- 4) Bootstrap / entry-point internals are not URLs ---------------------
+RewriteRule ^(app|approot|bootstrap)\.(php|inc\.php)$ - [R=404,L]
+
+# --- 5) Installer must stay unreachable after setup ------------------------
+#        (comment out temporarily if the web upgrade wizard is ever needed)
+RewriteRule ^setup(/|$) - [R=404,L]
+
+# --- 6) Never serve logs, dumps, backups or local tooling ------------------
+RewriteRule \.(log|sql|bak|swp|cmd|ps1)$ - [R=404,L]
+
+# --- 7) Response hardening headers -----------------------------------------
+Header unset X-Powered-By
+Header always unset X-Powered-By
+Header always unset Server
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+Header always set Content-Security-Policy "frame-ancestors 'self'"
+<If "%{HTTPS} == 'on'">
+	Header always set Strict-Transport-Security "max-age=31536000"
+</If>

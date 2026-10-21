@@ -1,7 +1,9 @@
 # Secrets - NEVER commit the production configuration (contains DB credentials)
 conf/production/config-itop.php
 conf/production/config-itop.php.backup
+conf/production/config-itop.php.bak*
 conf/production/cron.params
+conf/production/cron.params*
 
 # Runtime data, dumps, backups, logs
 data/
@@ -14,3 +16,6 @@ extensions/email-to-ticket/*.log
 extensions/email-to-ticket/*.lock
 extensions/email-to-ticket/processed-messageids.txt
 *.log
+
+# Security report stays on the server only (repo is public)
+security-report-20261021/

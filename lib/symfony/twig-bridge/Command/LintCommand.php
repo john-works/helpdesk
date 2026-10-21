@@ -54,27 +54,27 @@ class LintCommand extends Command
     protected function configure()
     {
         $this
-            ->addOption('format', null, InputOption::VALUE_REQUIRED, sprintf('The output format ("%s")', implode('", "', $this->getAvailableFormatOptions())))
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, \sprintf('The output format ("%s")', implode('", "', $this->getAvailableFormatOptions())))
             ->addOption('show-deprecations', null, InputOption::VALUE_NONE, 'Show deprecations as errors')
             ->addArgument('filename', InputArgument::IS_ARRAY, 'A file, a directory or "-" for reading from STDIN')
             ->setHelp(<<<'EOF'
-The <info>%command.name%</info> command lints a template and outputs to STDOUT
-the first encountered syntax error.
+                The <info>%command.name%</info> command lints a template and outputs to STDOUT
+                the first encountered syntax error.
 
-You can validate the syntax of contents passed from STDIN:
+                You can validate the syntax of contents passed from STDIN:
 
-  <info>cat filename | php %command.full_name% -</info>
+                  <info>cat filename | php %command.full_name% -</info>
 
-Or the syntax of a file:
+                Or the syntax of a file:
 
-  <info>php %command.full_name% filename</info>
+                  <info>php %command.full_name% filename</info>
 
-Or of a whole directory:
+                Or of a whole directory:
 
-  <info>php %command.full_name% dirname</info>
-  <info>php %command.full_name% dirname --format=json</info>
+                  <info>php %command.full_name% dirname</info>
+                  <info>php %command.full_name% dirname --format=json</info>
 
-EOF
+                EOF
             )
         ;
     }
@@ -151,7 +151,7 @@ EOF
             return Finder::create()->files()->in($filename)->name($this->namePatterns);
         }
 
-        throw new RuntimeException(sprintf('File or directory "%s" is not readable.', $filename));
+        throw new RuntimeException(\sprintf('File or directory "%s" is not readable.', $filename));
     }
 
     private function validate(string $template, string $file): array
@@ -178,7 +178,7 @@ EOF
             'txt' => $this->displayTxt($output, $io, $files),
             'json' => $this->displayJson($output, $files),
             'github' => $this->displayTxt($output, $io, $files, true),
-            default => throw new InvalidArgumentException(sprintf('Supported formats are "%s".', implode('", "', $this->getAvailableFormatOptions()))),
+            default => throw new InvalidArgumentException(\sprintf('Supported formats are "%s".', implode('", "', $this->getAvailableFormatOptions()))),
         };
     }
 
@@ -189,7 +189,7 @@ EOF
 
         foreach ($filesInfo as $info) {
             if ($info['valid'] && $output->isVerbose()) {
-                $io->comment('<info>OK</info>'.($info['file'] ? sprintf(' in %s', $info['file']) : ''));
+                $io->comment('<info>OK</info>'.($info['file'] ? \sprintf(' in %s', $info['file']) : ''));
             } elseif (!$info['valid']) {
                 ++$errors;
                 $this->renderException($io, $info['template'], $info['exception'], $info['file'], $githubReporter);
@@ -197,9 +197,9 @@ EOF
         }
 
         if (0 === $errors) {
-            $io->success(sprintf('All %d Twig files contain valid syntax.', \count($filesInfo)));
+            $io->success(\sprintf('All %d Twig files contain valid syntax.', \count($filesInfo)));
         } else {
-            $io->warning(sprintf('%d Twig files have valid syntax and %d contain errors.', \count($filesInfo) - $errors, $errors));
+            $io->warning(\sprintf('%d Twig files have valid syntax and %d contain errors.', \count($filesInfo) - $errors, $errors));
         }
 
         return min($errors, 1);
@@ -209,7 +209,7 @@ EOF
     {
         $errors = 0;
 
-        array_walk($filesInfo, function (&$v) use (&$errors) {
+        array_walk($filesInfo, static function (&$v) use (&$errors) {
             $v['file'] = (string) $v['file'];
             unset($v['template']);
             if (!$v['valid']) {
@@ -224,35 +224,35 @@ EOF
         return min($errors, 1);
     }
 
-    private function renderException(SymfonyStyle $output, string $template, Error $exception, string $file = null, GithubActionReporter $githubReporter = null): void
+    private function renderException(SymfonyStyle $output, string $template, Error $exception, ?string $file = null, ?GithubActionReporter $githubReporter = null): void
     {
         $line = $exception->getTemplateLine();
 
         $githubReporter?->error($exception->getRawMessage(), $file, $line <= 0 ? null : $line);
 
         if ($file) {
-            $output->text(sprintf('<error> ERROR </error> in %s (line %s)', $file, $line));
+            $output->text(\sprintf('<error> ERROR </error> in %s (line %s)', $file, $line));
         } else {
-            $output->text(sprintf('<error> ERROR </error> (line %s)', $line));
+            $output->text(\sprintf('<error> ERROR </error> (line %s)', $line));
         }
 
         // If the line is not known (this might happen for deprecations if we fail at detecting the line for instance),
         // we render the message without context, to ensure the message is displayed.
         if ($line <= 0) {
-            $output->text(sprintf('<error> >> %s</error> ', $exception->getRawMessage()));
+            $output->text(\sprintf('<error> >> %s</error> ', $exception->getRawMessage()));
 
             return;
         }
 
         foreach ($this->getContext($template, $line) as $lineNumber => $code) {
-            $output->text(sprintf(
+            $output->text(\sprintf(
                 '%s %-6s %s',
                 $lineNumber === $line ? '<error> >> </error>' : '    ',
                 $lineNumber,
                 $code
             ));
             if ($lineNumber === $line) {
-                $output->text(sprintf('<error> >> %s</error> ', $exception->getRawMessage()));
+                $output->text(\sprintf('<error> >> %s</error> ', $exception->getRawMessage()));
             }
         }
     }

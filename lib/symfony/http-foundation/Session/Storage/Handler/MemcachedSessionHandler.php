@@ -47,7 +47,7 @@ class MemcachedSessionHandler extends AbstractSessionHandler
         $this->memcached = $memcached;
 
         if ($diff = array_diff(array_keys($options), ['prefix', 'expiretime', 'ttl'])) {
-            throw new \InvalidArgumentException(sprintf('The following options are not supported "%s".', implode(', ', $diff)));
+            throw new \InvalidArgumentException(\sprintf('The following options are not supported "%s".', implode(', ', $diff)));
         }
 
         $this->ttl = $options['expiretime'] ?? $options['ttl'] ?? null;
@@ -59,9 +59,15 @@ class MemcachedSessionHandler extends AbstractSessionHandler
         return $this->memcached->quit();
     }
 
-    protected function doRead(#[\SensitiveParameter] string $sessionId): string
+    protected function doRead(#[\SensitiveParameter] string $sessionId): string|false
     {
-        return $this->memcached->get($this->prefix.$sessionId) ?: '';
+        $data = $this->memcached->get($this->prefix.$sessionId);
+
+        if (false === $data && \Memcached::RES_NOTFOUND !== $this->memcached->getResultCode()) {
+            return false;
+        }
+
+        return $data ?: '';
     }
 
     public function updateTimestamp(#[\SensitiveParameter] string $sessionId, string $data): bool

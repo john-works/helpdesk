@@ -41,7 +41,7 @@ class ProfilerController
     private ?ContentSecurityPolicyHandler $cspHandler;
     private ?string $baseDir;
 
-    public function __construct(UrlGeneratorInterface $generator, ?Profiler $profiler, Environment $twig, array $templates, ContentSecurityPolicyHandler $cspHandler = null, string $baseDir = null)
+    public function __construct(UrlGeneratorInterface $generator, ?Profiler $profiler, Environment $twig, array $templates, ?ContentSecurityPolicyHandler $cspHandler = null, ?string $baseDir = null)
     {
         $this->generator = $generator;
         $this->profiler = $profiler;
@@ -78,7 +78,7 @@ class ProfilerController
         $page = $request->query->get('page', 'home');
         $profileType = $request->query->get('type', 'request');
 
-        if ('latest' === $token && $latest = current($this->profiler->find(null, null, 1, null, null, null, null, fn ($profile) => $profileType === $profile['virtual_type']))) {
+        if ('latest' === $token && $latest = current($this->profiler->find(null, null, 1, null, null, null, null, static fn ($profile) => $profileType === $profile['virtual_type']))) {
             $token = $latest['token'];
         }
 
@@ -105,7 +105,7 @@ class ProfilerController
         }
 
         if (!$profile->hasCollector($panel)) {
-            throw new NotFoundHttpException(sprintf('Panel "%s" is not available for token "%s".', $panel, $token));
+            throw new NotFoundHttpException(\sprintf('Panel "%s" is not available for token "%s".', $panel, $token));
         }
 
         return $this->renderWithCspNonces($request, $this->getTemplateManager()->getName($profile, $panel), [
@@ -127,7 +127,7 @@ class ProfilerController
      *
      * @throws NotFoundHttpException
      */
-    public function toolbarAction(Request $request, string $token = null): Response
+    public function toolbarAction(Request $request, ?string $token = null): Response
     {
         if (null === $this->profiler) {
             throw new NotFoundHttpException('The profiler must be enabled.');
@@ -180,7 +180,7 @@ class ProfilerController
         $this->cspHandler?->disableCsp();
 
         $session = null;
-        if ($request->attributes->getBoolean('_stateless') && $request->hasSession()) {
+        if (!$request->attributes->getBoolean('_stateless') && $request->hasSession()) {
             $session = $request->getSession();
         }
 
@@ -229,7 +229,7 @@ class ProfilerController
             'request' => $request,
             'token' => $token,
             'profile' => $profile,
-            'tokens' => $this->profiler->find($ip, $url, $limit, $method, $start, $end, $statusCode, fn ($profile) => $profileType === $profile['virtual_type']),
+            'tokens' => $this->profiler->find($ip, $url, $limit, $method, $start, $end, $statusCode, static fn ($profile) => $profileType === $profile['virtual_type']),
             'ip' => $ip,
             'method' => $method,
             'status_code' => $statusCode,
@@ -279,7 +279,7 @@ class ProfilerController
             return new RedirectResponse($this->generator->generate('_profiler', ['token' => $token]), 302, ['Content-Type' => 'text/html']);
         }
 
-        $tokens = $this->profiler->find($ip, $url, $limit, $method, $start, $end, $statusCode, fn ($profile) => $profileType === $profile['virtual_type']);
+        $tokens = $this->profiler->find($ip, $url, $limit, $method, $start, $end, $statusCode, static fn ($profile) => $profileType === $profile['virtual_type']);
 
         return new RedirectResponse($this->generator->generate('_profiler_search_results', [
             'token' => $tokens ? $tokens[0]['token'] : 'empty',
@@ -309,7 +309,7 @@ class ProfilerController
         phpinfo();
         $phpinfo = ob_get_clean();
 
-        return new Response($phpinfo, 200, ['Content-Type' => 'text/html']);
+        return new Response($phpinfo, 200, ['Content-Type' => \in_array(\PHP_SAPI, ['cli', 'phpdbg'], true) ? 'text/plain' : 'text/html']);
     }
 
     /**
@@ -343,12 +343,12 @@ class ProfilerController
     {
         $this->denyAccessIfProfilerDisabled();
         if ('JetBrainsMono' !== $fontName) {
-            throw new NotFoundHttpException(sprintf('Font file "%s.woff2" not found.', $fontName));
+            throw new NotFoundHttpException(\sprintf('Font file "%s.woff2" not found.', $fontName));
         }
 
         $fontFile = \dirname(__DIR__).'/Resources/fonts/'.$fontName.'.woff2';
         if (!is_file($fontFile) || !is_readable($fontFile)) {
-            throw new NotFoundHttpException(sprintf('Cannot read font file "%s".', $fontFile));
+            throw new NotFoundHttpException(\sprintf('Cannot read font file "%s".', $fontFile));
         }
 
         $this->profiler?->disable();
@@ -375,7 +375,7 @@ class ProfilerController
         $filename = $this->baseDir.\DIRECTORY_SEPARATOR.$file;
 
         if (preg_match("'(^|[/\\\\])\.'", $file) || !is_readable($filename)) {
-            throw new NotFoundHttpException(sprintf('The file "%s" cannot be opened.', $file));
+            throw new NotFoundHttpException(\sprintf('The file "%s" cannot be opened.', $file));
         }
 
         return $this->renderWithCspNonces($request, '@WebProfiler/Profiler/open.html.twig', [

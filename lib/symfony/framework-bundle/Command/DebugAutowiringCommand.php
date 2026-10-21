@@ -21,6 +21,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Target;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\ErrorHandler\ErrorRenderer\FileLinkFormatter;
 
 /**
@@ -35,7 +36,7 @@ class DebugAutowiringCommand extends ContainerDebugCommand
 {
     private ?FileLinkFormatter $fileLinkFormatter;
 
-    public function __construct(string $name = null, FileLinkFormatter $fileLinkFormatter = null)
+    public function __construct(?string $name = null, ?FileLinkFormatter $fileLinkFormatter = null)
     {
         $this->fileLinkFormatter = $fileLinkFormatter;
         parent::__construct($name);
@@ -49,16 +50,16 @@ class DebugAutowiringCommand extends ContainerDebugCommand
                 new InputOption('all', null, InputOption::VALUE_NONE, 'Show also services that are not aliased'),
             ])
             ->setHelp(<<<'EOF'
-The <info>%command.name%</info> command displays the classes and interfaces that
-you can use as type-hints for autowiring:
+                The <info>%command.name%</info> command displays the classes and interfaces that
+                you can use as type-hints for autowiring:
 
-  <info>php %command.full_name%</info>
+                  <info>php %command.full_name%</info>
 
-You can also pass a search term to filter the list:
+                You can also pass a search term to filter the list:
 
-  <info>php %command.full_name% log</info>
+                  <info>php %command.full_name% log</info>
 
-EOF
+                EOF
             )
         ;
     }
@@ -75,10 +76,10 @@ EOF
         if ($search = $input->getArgument('search')) {
             $searchNormalized = preg_replace('/[^a-zA-Z0-9\x7f-\xff $]++/', '', $search);
 
-            $serviceIds = array_filter($serviceIds, fn ($serviceId) => false !== stripos(str_replace('\\', '', $serviceId), $searchNormalized) && !str_starts_with($serviceId, '.'));
+            $serviceIds = array_filter($serviceIds, static fn ($serviceId) => false !== stripos(str_replace('\\', '', $serviceId), $searchNormalized) && !str_starts_with($serviceId, '.'));
 
             if (!$serviceIds) {
-                $errorIo->error(sprintf('No autowirable classes or interfaces found matching "%s"', $search));
+                $errorIo->error(\sprintf('No autowirable classes or interfaces found matching "%s"', $search));
 
                 return 1;
             }
@@ -97,7 +98,7 @@ EOF
         $io->title('Autowirable Types');
         $io->text('The following classes & interfaces can be used as type-hints when autowiring:');
         if ($search) {
-            $io->text(sprintf('(only showing classes/interfaces matching <comment>%s</comment>)', $search));
+            $io->text(\sprintf('(only showing classes/interfaces matching <comment>%s</comment>)', $search));
         }
         $hasAlias = [];
         $all = $input->getOption('all');
@@ -106,6 +107,13 @@ EOF
         foreach ($serviceIds as $serviceId) {
             if ($container->hasDefinition($serviceId) && $container->getDefinition($serviceId)->hasTag('container.excluded')) {
                 continue;
+            }
+            try {
+                if ($container->findDefinition($serviceId)->isAbstract()) {
+                    continue;
+                }
+            } catch (ServiceNotFoundException) {
+                // the alias targets a service that was removed, it is listed as is
             }
             $text = [];
             $resolvedServiceId = $serviceId;
@@ -120,10 +128,10 @@ EOF
                 }
             }
 
-            $serviceLine = sprintf('<fg=yellow>%s</>', $serviceId);
+            $serviceLine = \sprintf('<fg=yellow>%s</>', $serviceId);
             if ('' !== $fileLink = $this->getFileLink($previousId)) {
                 $serviceLine = substr($serviceId, \strlen($previousId));
-                $serviceLine = sprintf('<fg=yellow;href=%s>%s</>', $fileLink, $previousId).('' !== $serviceLine ? sprintf('<fg=yellow>%s</>', $serviceLine) : '');
+                $serviceLine = \sprintf('<fg=yellow;href=%s>%s</>', $fileLink, $previousId).('' !== $serviceLine ? \sprintf('<fg=yellow>%s</>', $serviceLine) : '');
             }
 
             if ($container->hasAlias($serviceId)) {
@@ -168,7 +176,7 @@ EOF
         $io->newLine();
 
         if (0 < $serviceIdsNb) {
-            $io->text(sprintf('%s more concrete service%s would be displayed when adding the "--all" option.', $serviceIdsNb, $serviceIdsNb > 1 ? 's' : ''));
+            $io->text(\sprintf('%s more concrete service%s would be displayed when adding the "--all" option.', $serviceIdsNb, $serviceIdsNb > 1 ? 's' : ''));
         }
         if ($all) {
             $io->text('Pro-tip: use interfaces in your type-hints instead of classes to benefit from the dependency inversion principle.');

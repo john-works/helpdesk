@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\Bundle\FrameworkBundle\DataCollector\RouterDataCollector;
+use Symfony\Component\Cache\DataCollector\CacheDataCollector;
 use Symfony\Component\Console\DataCollector\CommandDataCollector;
 use Symfony\Component\HttpKernel\DataCollector\AjaxDataCollector;
 use Symfony\Component\HttpKernel\DataCollector\ConfigDataCollector;
@@ -40,6 +41,11 @@ return static function (ContainerConfigurator $container) {
             ->factory([\Closure::class, 'fromCallable'])
             ->args([[service('data_collector.request'), 'collectSessionUsage']])
 
+        // public to prevent inlining, made private in CacheCollectorPass
+        ->set('data_collector.cache', CacheDataCollector::class)
+            ->public()
+            ->tag('data_collector', ['template' => '@WebProfiler/Collector/cache.html.twig', 'id' => 'cache', 'priority' => 275])
+
         ->set('data_collector.ajax', AjaxDataCollector::class)
             ->tag('data_collector', ['template' => '@WebProfiler/Collector/ajax.html.twig', 'id' => 'ajax', 'priority' => 315])
 
@@ -56,7 +62,7 @@ return static function (ContainerConfigurator $container) {
         ->set('data_collector.logger', LoggerDataCollector::class)
             ->args([
                 service('logger')->ignoreOnInvalid(),
-                sprintf('%s/%s', param('kernel.build_dir'), param('kernel.container_class')),
+                \sprintf('%s/%s', param('kernel.build_dir'), param('kernel.container_class')),
                 service('.virtual_request_stack')->ignoreOnInvalid(),
             ])
             ->tag('monolog.logger', ['channel' => 'profiler'])

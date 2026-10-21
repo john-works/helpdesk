@@ -44,16 +44,18 @@ class RedisSessionHandler extends AbstractSessionHandler
         array $options = [],
     ) {
         if ($diff = array_diff(array_keys($options), ['prefix', 'ttl'])) {
-            throw new \InvalidArgumentException(sprintf('The following options are not supported "%s".', implode(', ', $diff)));
+            throw new \InvalidArgumentException(\sprintf('The following options are not supported "%s".', implode(', ', $diff)));
         }
 
         $this->prefix = $options['prefix'] ?? 'sf_s';
         $this->ttl = $options['ttl'] ?? null;
     }
 
-    protected function doRead(#[\SensitiveParameter] string $sessionId): string
+    protected function doRead(#[\SensitiveParameter] string $sessionId): string|false
     {
-        return $this->redis->get($this->prefix.$sessionId) ?: '';
+        $data = $this->redis->get($this->prefix.$sessionId);
+
+        return $data instanceof ErrorInterface ? false : ($data ?: '');
     }
 
     protected function doWrite(#[\SensitiveParameter] string $sessionId, string $data): bool
