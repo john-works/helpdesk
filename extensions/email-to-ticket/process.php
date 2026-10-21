@@ -49,7 +49,7 @@ require_once __DIR__ . "/class.smtpclient.php";
 function log_msg($msg)
 {
     $line = date("Y-m-d H:i:s") . " " . $msg . "\n";
-    file_put_contents(LOG_FILE, $line, FILE_APPEND);
+    @file_put_contents(LOG_FILE, $line, FILE_APPEND);
     echo $line;
 }
 

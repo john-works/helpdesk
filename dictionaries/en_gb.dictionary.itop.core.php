@@ -1275,3 +1275,5 @@ Dict::Add('EN GB', 'British English', 'British English', array(
 
 
 
+	'Menu:UserRequest:PPDAReport' => 'Report',
+	'Menu:UserRequest:PPDAReport+' => '',

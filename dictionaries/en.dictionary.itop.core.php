@@ -1288,3 +1288,5 @@ Dict::Add('EN US', 'English', 'English', array(
 
 
 
+	'Menu:UserRequest:PPDAReport' => 'Report',
+	'Menu:UserRequest:PPDAReport+' => '',
