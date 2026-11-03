@@ -12,7 +12,7 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 	const SMTP_SSL  = true;
 	const MAIL_FROM = 'helpdesk@ppda.go.ug';
 	const MAIL_USER = 'helpdesk@ppda.go.ug';
-	const MAIL_PASS = '23r0@2Q2$';
+	const MAIL_PASS = '7a08f8Gw9';
 	const FROM_LABEL = 'PPDA IT Help Desk';
 	const LOG_FILE = '/tmp/ppda-notifications.log';
 
@@ -44,6 +44,9 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 
 			$sStatus = (string)$oObject->Get('status');
 			$sPrevStatus = (string)$oObject->GetOriginal('status');
+			$sOperationalStatus = (string)$oObject->Get('operational_status');
+			$sPrevOperationalStatus = (string)$oObject->GetOriginal('operational_status');
+
 			if (MetaModel::IsValidAttCode(get_class($oObject), 'agent_id')) {
 				$sAgentAtt = 'agent_id';
 			} elseif (MetaModel::IsValidAttCode(get_class($oObject), 'assigned_to_id')) {
@@ -54,9 +57,16 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 			$iAgent = (int)$oObject->Get($sAgentAtt);
 			$iPrevAgent = (int)$oObject->GetOriginal($sAgentAtt);
 
-			if ($sStatus === 'resolved' && $sPrevStatus !== 'resolved') {
+			$bResolved = in_array($sStatus, array('resolved', 'closed'), true)
+				|| in_array($sOperationalStatus, array('resolved', 'closed'), true);
+			$bPrevResolved = in_array($sPrevStatus, array('resolved', 'closed'), true)
+				|| in_array($sPrevOperationalStatus, array('resolved', 'closed'), true);
+
+			if ($bResolved && !$bPrevResolved) {
+				$this->Log('RESOLVED_EVENT ' . $oObject->Get('ref') . ' status=' . $sStatus . ' op=' . $sOperationalStatus . ' prev=' . $sPrevStatus . ' prevOp=' . $sPrevOperationalStatus);
 				$this->SendResolved($oObject);
-			} elseif ($iAgent > 0 && $iAgent !== $iPrevAgent && $sStatus !== 'resolved' && $sStatus !== 'closed') {
+			} elseif ($iAgent > 0 && ($iAgent !== $iPrevAgent || ($sStatus === 'assigned' && $sPrevStatus !== 'assigned'))) {
+				$this->Log('ASSIGNED_EVENT ' . $oObject->Get('ref') . ' agent=' . $iAgent . ' prev=' . $iPrevAgent . ' status=' . $sStatus . ' prevStatus=' . $sPrevStatus);
 				$this->SendAssigned($oObject, $iAgent);
 			}
 		} catch (\Exception $e) {
@@ -72,9 +82,12 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 	{
 		$oAgent = MetaModel::GetObject('Person', $iAgentId, false);
 		if (!$oAgent) {
+			$oAgent = MetaModel::GetObject('Contact', $iAgentId, false);
+		}
+		if (!$oAgent) {
 			return;
 		}
-		$sTo = (string)$oAgent->Get('email');
+		$sTo = trim((string)$oAgent->Get('email'));
 		if ($sTo === '') {
 			return;
 		}
@@ -127,9 +140,12 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 		}
 		$oCaller = MetaModel::GetObject('Person', $iCallerId, false);
 		if (!$oCaller) {
+			$oCaller = MetaModel::GetObject('Contact', $iCallerId, false);
+		}
+		if (!$oCaller) {
 			return;
 		}
-		$sTo = (string)$oCaller->Get('email');
+		$sTo = trim((string)$oCaller->Get('email'));
 		if ($sTo === '') {
 			return;
 		}
@@ -216,7 +232,7 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 
 	protected function SendMail($sTo, $sSubject, $sHtml)
 	{
-		require_once __DIR__ . '/../email-to-ticket/class.smtpclient.php';
+		require_once __DIR__ . '/../../extensions/email-to-ticket/class.smtpclient.php';
 		$oSmtp = new SMTPClient();
 		$oSmtp->connect(self::SMTP_HOST, self::SMTP_PORT, self::SMTP_SSL);
 		$oSmtp->login(self::MAIL_USER, self::MAIL_PASS);

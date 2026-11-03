@@ -12,7 +12,7 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 	const SMTP_SSL  = true;
 	const MAIL_FROM = 'helpdesk@ppda.go.ug';
 	const MAIL_USER = 'helpdesk@ppda.go.ug';
-	const MAIL_PASS = '23r0@2Q2$';
+	const MAIL_PASS = '7a08f8Gw9';
 	const FROM_LABEL = 'PPDA IT Help Desk';
 	const LOG_FILE = '/tmp/ppda-notifications.log';
 
@@ -216,7 +216,7 @@ class PPDATicketNotifications implements iApplicationObjectExtension
 
 	protected function SendMail($sTo, $sSubject, $sHtml)
 	{
-		require_once __DIR__ . '/../email-to-ticket/class.smtpclient.php';
+		require_once __DIR__ . '/../../extensions/email-to-ticket/class.smtpclient.php';
 		$oSmtp = new SMTPClient();
 		$oSmtp->connect(self::SMTP_HOST, self::SMTP_PORT, self::SMTP_SSL);
 		$oSmtp->login(self::MAIL_USER, self::MAIL_PASS);

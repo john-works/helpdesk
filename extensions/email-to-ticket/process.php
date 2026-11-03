@@ -34,12 +34,14 @@ register_shutdown_function(function () use ($processLock) {
 $MAILBOXES = [
     [
         'user'            => 'helpdesk@ppda.go.ug',
-        'pass'            => '23r0@2Q2$',
+        'pass'            => '7a08f8Gw9',
         'class'           => 'UserRequest',
         'service_id'      => null,
         'team_id'         => null,
         'allowed_domains' => null,
-        'notify'          => null,
+        'notify'          => [
+            'cc' => 'helpdesk@ppda.go.ug',
+        ],
     ],
 ];
 
